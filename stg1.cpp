@@ -1,0 +1,953 @@
+/*
+Shooting Game
+
+Controls
+Movement: Directional keys
+Shots: Z key
+
+Image Material
+HamCorossam
+http://homepage2.nifty.com/hamcorossam/
+
+Sound Effects
+The Matchmakers
+http://osabisi.sakura.ne.jp/m2/
+
+Dot Picture Tools
+EDGE
+http://takabosoft.com/edge
+*/
+
+#define _USE_MATH_DEFINES
+#include "DxLib.h"
+#include <math.h>
+
+//WINDOW SIZE
+#define MIN_X 32
+#define MIN_Y 16
+#define MAX_X 416
+#define MAX_Y 464
+
+//Screen center coordinates
+#define CENTER_X ((MIN_X + MAX_X)/2)
+#define CENTER_Y ((MIN_Y + MAX_Y)/2)
+
+//Angle Calculation  radians->degrees
+#define OMEGA( t ) (t * M_PI / 180)
+
+//Maximum number of enemies
+#define MAX_ENEMY 50
+
+//Maximum number of bullets in screen
+#define MAX_BULLET 2000
+
+//Maximum number of the shooter
+#define MAX_PLAYER_SHOT 100
+
+//Bullet type
+#define NORMAL 1//Circle
+#define LASER 2//Laser
+
+//Enemy Action Patterns
+#define STOP 0
+#define STRAIGHT 1
+#define CIRCLE 2
+
+//Maximum number of effects
+#define MAX_EFFECT MAX_BULLET
+
+//Color
+#define WHITE GetColor(255,255,255)//White
+
+#define LEVEL_UP_SCORE 300 //Level up for each of this score.(100 points for 1 enemy)
+
+#define BORN1 20 // Frequency of Enemy Appearance
+#define BORN2 1000 // Frequency of Boss Appearance
+
+#define SCORE_BOSS 2000
+#define SCORE_ENEMY 100
+
+
+int t;//time
+
+int enemy_img;//Enemy Image
+int boss_img;// Boss Image
+int bullet_img1,bullet_img2;//Images of Enemy Bullets
+int shot_img;//Images of Shooter Bullets
+int board_img;//Image of the frame
+int back_img;//Background Image
+int effect_img[17];//Effects Images
+int score;
+
+int shot_snd;//Sound of the shooter firing
+int bullet_snd;//sound of enemy bullets being fired
+int bom_snd1;//Explosion 1
+int bom_snd2;//Explosion 2
+int up_snd;//power-up sound
+
+//Shooter
+struct Player
+{
+	int x;//coordinate         
+	int y;
+	int img;//image
+	int hp;//remaining lives
+	double range;//collision detection radius
+	bool isDamage;//true if under fire
+};
+
+struct Player player;
+
+//Shooter Bullet
+struct PlayerShot
+{
+	double x;//coordinate  
+	double y;
+	double angle;
+	double speed;
+	double range;//collision detection radius
+	int img;//image
+	int power;//power of the shot
+	bool isExist;//true if present, false if not present
+};
+
+struct PlayerShot shot[MAX_PLAYER_SHOT];
+
+//Enemy
+struct Enemy
+{
+	double x;//X coordinate 
+	double y;//Y coordinate
+	double x0;//initial X coordinate  
+	double y0;//initial Y coordinate
+	double angle;
+	double speed;
+	double range;//collision detection radius
+	int img;//image
+	int hp;//Enemy strength
+	int action;//Type of enemy action
+	bool isExist;//true if present, false if not present
+	bool isBoss;//if Boss, true
+	int t;//time
+
+};
+
+struct Enemy enemy[MAX_ENEMY];
+bool isBossExist = false;
+
+//Enemy Bullet
+struct Bullet
+{
+
+	double x;//coordinate  
+	double y;
+	double angle;
+	double speed;
+	double range;//collision detection radius
+	int img;//image
+	bool isExist;//true if present, false if not present
+};
+
+struct Bullet bullet[MAX_BULLET];//Bullets
+
+//Effect
+struct Effect
+{
+	int x;//座標
+	int y;
+	int img[20];//画像
+	int max_img;//画像の最大数
+	int t;//経過時間
+	bool isExist;//存在したらtrue、いなかったらfalse
+};
+
+struct Effect effect[MAX_EFFECT];
+
+void initEnemy(int i)
+{
+	enemy[i].x = 0;
+	enemy[i].y = 0;
+	enemy[i].x0 = 0;
+	enemy[i].y0 = 0;
+	enemy[i].range = 0;
+	enemy[i].hp = 0;
+	enemy[i].isExist = false;
+	enemy[i].isBoss = false;
+	enemy[i].t = 0;
+}
+//Initialization
+void Init()
+{
+	int i;
+	t = 0;//Time initialization
+	score = 0;
+	//shooter initial position
+	player.x = CENTER_X;
+	player.y = CENTER_Y * 1.5 ;
+
+	player.hp = 5;//Start with 5 remaining units
+
+	player.range = 3;//Boundary radius
+
+	player.isDamage = false;
+
+	//Enemy initialization
+	for(i = 0; i < MAX_ENEMY; i++)
+	{
+		initEnemy(i);
+	}
+
+	//Bullet initialization
+	//Effects initialization
+	for(i = 0; i < MAX_BULLET; i++)
+	{
+		bullet[i].isExist = false;
+		bullet[i].x = 0;
+		bullet[i].y = 0;
+		bullet[i].speed = 0;
+		bullet[i].angle = 0;
+		bullet[i].range = 0;
+
+		effect[i].isExist = false;
+		effect[i].x = 0;
+		effect[i].y = 0;
+		effect[i].max_img = 0;
+	}
+
+}
+
+// Function to read in image and sound files
+void LoadData()
+{
+	//image
+	player.img = LoadGraph("fighter.png");
+	enemy_img = LoadGraph("smallenemy.png");
+	boss_img = LoadGraph("boss.png");
+	bullet_img1 = LoadGraph("bullet1.png");
+	bullet_img2 = LoadGraph("bullet2.png");
+	shot_img = LoadGraph("shot.png");
+	board_img = LoadGraph("board.png");
+	back_img = LoadGraph("back.png");
+	LoadDivGraph("effect.png",17,8,3,64,64,effect_img);
+
+	//sound
+	shot_snd = LoadSoundMem("push07.wav");
+	bullet_snd = LoadSoundMem("close09.wav");
+	bom_snd1 = LoadSoundMem("bom01.wav");
+	bom_snd2 = LoadSoundMem("bom10.wav");
+	up_snd = LoadSoundMem("power00.wav");
+
+	// Volume setting
+	ChangeVolumeSoundMem( 255*0.1, shot_snd ) ;
+	ChangeVolumeSoundMem( 255*0.5, bullet_snd ) ;
+
+}
+
+//Effects Generation Functions
+void MakeEffect(int x, int y, int max)
+{
+	int i,j; 
+
+	//Examine the effect in use
+	for( i = 0; i < MAX_EFFECT; i++)
+	{
+		if( !effect[i].isExist )
+			break;
+	}
+
+	if ( i == MAX_EFFECT )//Not a single one available.
+		return;
+
+	effect[i].isExist = true;
+	effect[i].x = x;
+	effect[i].y = y;
+	effect[i].t = 0;
+	effect[i].max_img = max;
+
+	for( j = 0; j < max; j++)
+	{
+		effect[i].img[j] = effect_img[j];
+	}
+
+}
+
+//Generation of shooter shot
+void MakeShot(double speed, double angle, int power, double range)
+{
+	int i;
+
+	//Examine the shot being fired.
+	for(i = 0; i < MAX_PLAYER_SHOT; i++)
+	{
+		if( !shot[i].isExist)
+			break;
+	}
+	if( i == MAX_PLAYER_SHOT)
+		return;
+
+	shot[i].isExist = true;
+
+	shot[i].x = player.x;
+	shot[i].y = player.y;
+
+	shot[i].speed = speed;
+	shot[i].angle = angle;
+	shot[i].power = power;
+	shot[i].range = range;
+
+	shot[i].img = shot_img;
+
+	PlaySoundMem( shot_snd , DX_PLAYTYPE_BACK ) ;//sound of the shot
+
+}
+
+//Fires shooter shots in multiple directions
+void MakeWayShot(double speed, int power, double range, int way, double wide_angle, double main_angle)
+{
+	int i; 
+
+	double w_angle;
+	
+	if (way == 1)
+	{
+		MakeShot(speed, main_angle, power, range);
+		return;
+	}
+	
+	for( i = 0; i < way; i++)
+	{
+		if( wide_angle == OMEGA(360))
+			w_angle = main_angle + i * wide_angle / way;//Launch angle
+		else
+			w_angle = main_angle + i * wide_angle / ( way - 1 ) - wide_angle / 2;//Launch angle
+
+		MakeShot(speed,w_angle,power,range);
+	}
+}
+
+//Movement of the shooter
+void ActionPlayer()
+{
+	const int fire = 4;
+	const int speed = 4;
+
+	double s_speed = 8;
+	double s_angle = OMEGA( -90 );
+	double range = 16;
+
+	int power = 1;
+
+	int way = 5;
+
+
+	if( player.isDamage )//Do not move while being hit by a bullet
+		return;
+	//Move with the directional keys
+	if( CheckHitKey(KEY_INPUT_LEFT) )
+		player.x -= speed;
+	if( CheckHitKey(KEY_INPUT_RIGHT) )
+		player.x += speed;
+	if( CheckHitKey(KEY_INPUT_UP) )
+		player.y -= speed;
+	if( CheckHitKey(KEY_INPUT_DOWN) )
+		player.y += speed;
+
+	//Shoot Shots.
+	if( CheckHitKey(KEY_INPUT_Z)  && t % fire == 0 )
+	{
+		//+1 direction for each certain number of enemies defeated (up to 6 directions)
+		way = score > LEVEL_UP_SCORE * 5 ? way : score / LEVEL_UP_SCORE + 1;
+		MakeWayShot(s_speed,power,range,way,OMEGA( (way - 1) * 20 ),s_angle);
+	}
+
+	//Restrictions on movement
+	if( player.x < MIN_X )
+		player.x = MIN_X;
+	if( player.x > MAX_X )
+		player.x = MAX_X;
+	if( player.y < MIN_Y )
+		player.y = MIN_Y;
+	if( player.y > MAX_Y)
+		player.y = MAX_Y;
+}
+
+//Movement of the shooter bullets
+void MoveShot()
+{
+	int i;
+
+	double x,y,angle,speed;
+
+	// Examine the shot being fired
+	for(i = 0; i < MAX_PLAYER_SHOT; i++)
+	{
+		if( !shot[i].isExist )
+			continue;
+
+		x = shot[i].x;
+		y = shot[i].y;
+
+		speed = shot[i].speed;
+		angle = shot[i].angle;
+
+		x += speed * cos( angle );
+		y += speed * sin( angle );
+
+		// If the bullet goes off the screen, the bullet is eliminated.
+		if( x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
+			shot[i].isExist = false;
+
+		shot[i].x = x;
+		shot[i].y = y;
+
+	}
+}
+
+////Hit detection process for shooter shot
+void JudgeShot()
+{
+	int i,j;
+	double x,y;
+
+
+	// Examine the enemy present
+	for(i = 0; i < MAX_ENEMY; i++)
+	{
+
+		if( !enemy[i].isExist )
+			continue;
+
+		// Examine all shots being fired
+		for(j = 0; j < MAX_PLAYER_SHOT; j++)
+		{
+			if( !shot[j].isExist )
+				continue;
+
+			x = shot[j].x - enemy[i].x;
+			y = shot[j].y - enemy[i].y;
+
+			// If a shot hits the enemy
+			if( hypot (x,y) < enemy[i].range + shot[j].range )
+			{
+				shot[j].isExist = false;
+
+				enemy[i].hp -= shot[j].power;//Reduce enemy strength
+
+				//Eliminate enemies when they run out of energy.
+				if(enemy[i].hp < 0)
+				{
+					MakeEffect( enemy[i].x, enemy[i].y, 17);//Explosion Effects
+
+					PlaySoundMem( bom_snd1 , DX_PLAYTYPE_BACK ) ;//sound of an explosion
+					if (enemy[i].isBoss)
+					{
+						score += SCORE_BOSS;
+						isBossExist = false;
+					}
+					else
+						score += SCORE_ENEMY;
+					initEnemy(i);
+					if( score % LEVEL_UP_SCORE == 0 && score > 0 && score < LEVEL_UP_SCORE * 6)
+						PlaySoundMem( up_snd , DX_PLAYTYPE_BACK ) ;//Power up sound
+				}
+			}
+
+		}
+	}
+}
+
+//Display for shooter
+void DrawPlayer()
+{
+	int i;
+
+	//Display for shooter
+	DrawRotaGraphF( (float)player.x, (float)player.y, 1.0, 0, player.img, TRUE ) ;
+
+	//Display for shooter shots
+	for(i = 0; i < MAX_PLAYER_SHOT; i++)
+	{
+		if( shot[i].isExist )
+			DrawRotaGraphF( (float)shot[i].x, (float)shot[i].y, 1.0, shot[i].angle, shot[i].img, TRUE ) ;
+	}
+}
+
+//Shooter Aiming Angle
+double TargetAnglePlayer(double x, double y)
+{	
+	return atan2( player.y - y, player.x - x);	
+}
+
+//Generating a barrage of bullets
+//Direction bullet (x,y: launch point, speed: velocity, angle: angle)
+void MakeBullet(double x, double y, double speed, double angle, double range, int img)
+{
+	int i; 
+
+	for( i = 0; i < MAX_BULLET; i++)
+	{
+		//If bullet[i] is not used, go to parameter setting
+		if( !bullet[i].isExist )
+			break;
+	}
+	if ( i == MAX_BULLET )//Not a single one available.
+		return;
+
+	bullet[i].isExist = true;
+
+	//Coordinates of launch point
+	bullet[i].x = x;
+	bullet[i].y = y;
+
+	bullet[i].angle = angle;//Firing angle
+	bullet[i].speed = speed;//Speed
+
+	bullet[i].range = range;
+
+	bullet[i].img = img;//Image
+
+	PlaySoundMem( bullet_snd , DX_PLAYTYPE_BACK ) ; //sound of the shot
+
+}
+
+//way bullet(way:which direction to hit, angle:angle of fan shape, main_angle:which direction the fan shape faces)
+void MakeWayBullet(double x, double y, double speed, int way, double wide_angle ,double main_angle, double range,int img)
+{
+	int i; 
+
+	double w_angle;
+
+	for( i = 0; i < way; i++)
+	{
+		if( wide_angle == OMEGA(360))
+			w_angle = main_angle + i * wide_angle / way;//Firing angle
+		else
+			w_angle = main_angle + i * wide_angle / ( way - 1 ) - wide_angle / 2;//Firing angle
+
+		MakeBullet(x,y,speed,w_angle,range,img);
+	}
+
+}
+
+//Movement of Bullets
+void MoveBullet()
+{
+	double x, y;
+	double angle;
+	int i;
+
+	//Examine all bullets being fired.
+	for(i = 0; i < MAX_BULLET; i++)
+	{
+		if( !bullet[i].isExist )
+			continue;
+
+		x = bullet[i].x;
+		y = bullet[i].y;
+
+		angle = bullet[i].angle;
+
+		//Advance by a speed in the angle angle direction
+		x += bullet[i].speed * cos( angle );
+		y += bullet[i].speed * sin( angle );
+
+		//If the bullet goes off the screen, the bullet is eliminated
+		if( x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
+			bullet[i].isExist = false;
+
+		bullet[i].x = x;
+		bullet[i].y = y;
+	}
+
+}
+
+void JudgeBullet()
+{
+	int i;
+	double x,y;
+
+	//Examine all bullets being fired.
+	for(i = 0; i < MAX_BULLET; i++)
+	{
+		if( !bullet[i].isExist )
+			continue;
+
+		x = bullet[i].x - player.x;
+		y = bullet[i].y - player.y;
+
+		//If the shooter is not in the process of being hit and the hit points make contact.
+		if( hypot (x,y) < player.range + bullet[i].range && !player.isDamage)
+		{
+			MakeEffect(player.x, player.y, 17);
+			bullet[i].isExist = false;
+			player.isDamage = true;
+
+			player.hp--;
+
+			PlaySoundMem( bom_snd2, DX_PLAYTYPE_BACK ) ;//sound of an explosion
+		}
+	}
+}
+
+//Eliminate all enemy bullets
+void EraseBullet()
+{
+	int i;
+
+	for(i = 0; i < MAX_BULLET; i++)
+		bullet[i].isExist = false;
+}
+
+//Appearance of the Enemy
+void MakeEnemy()
+{
+	int i;
+	//small enemy Go straight to random direction on the bottom side
+	if( t % BORN1 == 0 && !isBossExist )
+	{
+		for(i = 0;i < MAX_ENEMY; i++)
+		{
+			if( !enemy[i].isExist )
+				break;
+		}
+
+		if( i == MAX_ENEMY )
+			return ;
+
+		enemy[i].isExist = true;
+
+		//Appears at a random position at the top
+		enemy[i].x0 = GetRand(MAX_X - MIN_X) + MIN_X;
+		enemy[i].y0 = MIN_Y;
+		enemy[i].x = enemy[i].x0;
+		enemy[i].y = enemy[i].y0; 
+		enemy[i].hp = 1;
+
+		enemy[i].angle = OMEGA( GetRand(180) );//Angles from 0° to 180°.
+		enemy[i].speed = GetRand(6) + 2;//Speeds from 2 to 8
+
+		enemy[i].range = 15;//The size of the hit
+
+		enemy[i].action = STRAIGHT;//Go straight to a fixed angle
+
+		enemy[i].img = enemy_img;
+	}
+
+	//Large enemy (Boss)
+	if( t % BORN2 == 0 && t > 0 && !isBossExist )
+	{
+		for(i = 0;i < MAX_ENEMY; i++)
+		{
+			if( !enemy[i].isExist )
+				break;
+		}
+
+		if( i == MAX_ENEMY )
+			return ;
+
+		isBossExist = true;
+		enemy[i].isExist = true;
+		enemy[i].isBoss = true;
+
+		enemy[i].x0 = CENTER_X;
+		enemy[i].y0 = MAX_Y / 4;
+		enemy[i].x = enemy[i].x0;
+		enemy[i].y = enemy[i].y0;
+
+		enemy[i].hp = 200;
+
+		enemy[i].angle = OMEGA( 90 );//pointing down
+		enemy[i].speed = 0;
+
+		enemy[i].range = 130;
+
+		enemy[i].action = STOP;//CIRCLE;//coordinate fixation
+
+		enemy[i].img = boss_img;
+	}
+	
+
+}
+
+
+// Enemy Actions
+void ActionEnemy()
+{
+	int i;
+
+	int fire;
+
+	double speed;
+	//	double angle;
+
+	int way;
+	//	double main_angle;
+
+	double range;
+
+	int x,y;
+
+	for(i = 0; i < MAX_ENEMY; i++){
+
+		if( !enemy[i].isExist )//If there is an enemy, move on to the next.
+			continue;
+
+		switch(enemy[i].action)
+		{
+		case STOP://DO nothing
+			break;
+
+		case STRAIGHT://Go straight in a fixed direction
+
+			enemy[i].x += enemy[i].speed * cos( enemy[i].angle );
+			enemy[i].y += enemy[i].speed * sin( enemy[i].angle );
+			break;
+
+		case CIRCLE://Go straight in a fixed direction
+			const int r = 100;
+			enemy[i].x = r * cos(OMEGA(enemy[i].t)) + enemy[i].x0;
+			enemy[i].y = r * sin(OMEGA(enemy[i].t)) + enemy[i].y0;
+			break;
+
+		}
+
+		x = enemy[i].x;
+		y = enemy[i].y;
+
+		//If the bullet goes off the screen, the bullet is eliminated.
+		if (x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
+		{
+			enemy[i].isExist = false;
+			enemy[i].t = 0;
+			continue;
+		}
+		enemy[i].t++;
+		switch(enemy[i].action)
+		{
+		case STOP: case CIRCLE:
+			fire = 40;
+			x = enemy[i].x;
+			y = enemy[i].y;
+			speed = 2.0;
+			way = 5;
+			range = 8;
+			//Fires a bullet every fire loop
+			if( t % fire == 0 )//Three types of barrage
+			{
+				MakeWayBullet(x+140,y,1.5,3,OMEGA( 60 ),OMEGA(90)+OMEGA(30)*sin(OMEGA(t)),3,bullet_img2);
+				MakeWayBullet(x-140,y,1.5,3,OMEGA( 60 ),OMEGA(90)+OMEGA(30)*sin(OMEGA(t)),3,bullet_img2);
+				MakeWayBullet(x,y,speed,way,OMEGA(5),TargetAnglePlayer(x,y),range,bullet_img1);
+			}
+			break;
+
+		case STRAIGHT:
+			const int LEVEL_MAX_SCORE = 100000;
+			if( score > LEVEL_MAX_SCORE )
+				fire = 20;
+			else
+				fire = (LEVEL_MAX_SCORE - score) * 80 / LEVEL_MAX_SCORE + 20;
+			x = enemy[i].x;
+			y = enemy[i].y;
+			speed = 2.0;
+			way = 3;
+			range = 8;
+			//Fires a bullet every fire loop
+			if( t % fire == 0 )
+			{
+				switch(GetRand(1))//Fire a barrage of either
+				{
+				case 0:
+					MakeWayBullet(x,y,speed,way,OMEGA(30),TargetAnglePlayer(x,y),range,bullet_img1);
+					break;
+
+				case 1:
+					MakeWayBullet(x,y,speed,2*way,OMEGA(360),OMEGA( GetRand(360) ),range,bullet_img1);
+					break;
+				}
+			}
+			break;
+
+		}
+	}
+}
+
+//Display of Bullets
+void DrawBullet()
+{
+	double x,y,angle;
+	int img;
+
+	int i;
+
+	//Examine all bullets being fired
+	for(i = 0; i < MAX_BULLET; i++)
+	{
+		if( !bullet[i].isExist )
+			continue;
+
+		x = bullet[i].x ;
+		y = bullet[i].y ;
+
+		angle = bullet[i].angle ;
+
+		img = bullet[i].img ;
+
+		//Bullet Display
+		DrawRotaGraphF( (float)x, (float)y, 1.0, angle, img, TRUE ) ;
+
+	}
+}
+
+//Enemy Display
+void DrawEnemy()
+{
+	int i;
+
+	for( i = 0; i < MAX_ENEMY; i++ )
+	{
+		if( !enemy[i].isExist )//If there is an enemy, move on to the next.
+			continue;
+
+		DrawRotaGraph( enemy[i].x, enemy[i].y, 1.0, enemy[i].angle, enemy[i].img, TRUE ) ;
+
+	}
+
+}
+
+//Displaying Effects
+void DrawEffect()
+{
+	int i;
+	int x,y;
+
+	int ft;
+
+	//Examine all effects during firing
+	for(i = 0; i < MAX_EFFECT; i++)
+	{
+		if( !effect[i].isExist )
+			continue;
+
+		x = effect[i].x ;
+		y = effect[i].y ;
+		ft = effect[i].t ;
+
+		DrawRotaGraphF( (float)x, (float)y, 1.0, 0, effect[i].img[ft], TRUE ) ;
+
+		effect[i].t++ ;//Advancing Effects Time
+
+		//Turn it off after displaying everything.
+		if(effect[i].t >= effect[i].max_img)
+		{
+			effect[i].isExist = false;
+
+			if(effect[i].x == player.x && effect[i].y == player.y)//In case of shooter's bullet
+			{
+				EraseBullet();//Eliminate all enemy bullets
+				player.isDamage = false;//No longer under fire.
+			}
+		}
+	}
+}
+
+//Background Display
+void DrawBack()
+{
+	int time;
+
+	time = 8 * ( t % ( ( MAX_Y - MIN_Y ) / 8 ) );
+
+	//background scrolling display
+	DrawGraph( MIN_X, MIN_Y + time, back_img, false );
+
+	if( time > 0 )
+		DrawGraph( MIN_X, 2 * MIN_Y + time - MAX_Y, back_img, false );
+}
+
+//Display of scores, etc.
+void DrawSystem()
+{
+	DrawGraph( 0, 0, board_img,true);
+
+	DrawFormatString(MAX_X+50,MIN_Y+30,WHITE,"PLAYER：%d",player.hp);
+	DrawFormatString(MAX_X+50,MIN_Y,WHITE,"SCORE：%d",score);
+}
+
+int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
+	LPSTR lpCmdLine, int nCmdShow )
+{
+	// Change title
+	SetMainWindowText( "Shooting" ) ;
+	// Change to window mode
+	ChangeWindowMode( TRUE ) ;
+	// DX library initialization process
+	if (DxLib_Init() == -1)
+		return -1;	// Terminate immediately if an error occurs
+
+	// Set the screen to the back of the screen to draw on
+	SetDrawScreen(DX_SCREEN_BACK);
+
+	while(1)
+	{	
+		LoadData();
+		Init();
+
+		DrawString(0,330,"Press Space Bar",WHITE);//Press spacebar to start
+		ScreenFlip();
+		while(!CheckHitKey(KEY_INPUT_SPACE))
+		{
+			if ( ProcessMessage() == -1 )
+			{
+				DxLib_End();// Exit process for DX library use
+				return 0;
+			}		//Main loop Esc key to exit
+		}
+		while( !CheckHitKey(KEY_INPUT_ESCAPE) &&  player.hp > 0)
+		{
+			if ( ProcessMessage() == -1 )
+			{
+				DxLib_End();// DX library termination process
+				return 0;
+			}
+
+			ClearDrawScreen();
+
+			ActionPlayer();
+
+			MoveShot();
+
+			MakeEnemy();
+
+			ActionEnemy();
+
+			MoveBullet();
+
+			JudgeShot();
+
+			JudgeBullet();
+
+			DrawBack();
+
+			DrawEnemy();
+
+			DrawPlayer();
+
+			DrawEffect();
+
+			DrawBullet();
+
+			DrawSystem();
+
+			t++;//advance time
+
+			// Reflects the contents of the back screen on the front screen
+			ScreenFlip();
+		}
+
+		DrawString(0,300,"GAME OVER",WHITE);
+
+		ScreenFlip();
+	}
+	DxLib_End();// DX library termination process
+	return 0;
+}
