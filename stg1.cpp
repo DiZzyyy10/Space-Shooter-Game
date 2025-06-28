@@ -58,6 +58,7 @@ http://takabosoft.com/edge
 
 //Color
 #define WHITE GetColor(255,255,255)//White
+#define RED GetColor(255,0,0) // Red
 
 #define LEVEL_UP_SCORE 300 //Level up for each of this score.(100 points for 1 enemy)
 
@@ -876,8 +877,17 @@ void DrawSystem()
 {
 	DrawGraph( 0, 0, board_img,true);
 
-	DrawFormatString(548,152,WHITE,"%d",player.hp);
-	DrawFormatString(540,102,WHITE,"%d",score);
+	if (player.hp > 2)
+	{
+		DrawFormatString(548,152,WHITE,"%d",player.hp);
+		DrawFormatString(540,102,WHITE,"%d",score);
+	}
+	else
+	{
+		DrawFormatString(548, 152, RED, "%d", player.hp);
+		DrawFormatString(540, 102, WHITE, "%d", score);
+	}
+	
 }
 
 int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,

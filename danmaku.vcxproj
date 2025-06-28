@@ -21,6 +21,9 @@
   <ItemGroup>
     <ClCompile Include="stg1.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{66246CF6-9776-4A7E-97B6-4B4C5371AFD1}</ProjectGuid>
