@@ -876,8 +876,8 @@ void DrawSystem()
 {
 	DrawGraph( 0, 0, board_img,true);
 
-	DrawFormatString(MAX_X+50,MIN_Y+30,WHITE,"PLAYERÅF%d",player.hp);
-	DrawFormatString(MAX_X+50,MIN_Y,WHITE,"SCOREÅF%d",score);
+	DrawFormatString(548,152,WHITE,"%d",player.hp);
+	DrawFormatString(540,102,WHITE,"%d",score);
 }
 
 int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
