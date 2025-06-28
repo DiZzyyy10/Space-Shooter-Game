@@ -85,6 +85,13 @@ int bom_snd1;//Explosion 1
 int bom_snd2;//Explosion 2
 int up_snd;//power-up sound
 
+
+int targetFPS = 60; //FPS
+int timePerFrame = 1000 / 60; // Time cost per frame
+int startLoopTime = 0; // Time when the loop start
+int endLoopTime = 0; // Time when the loop ends
+int timePassed = 0; // start - endtime
+
 //Shooter
 struct Player
 {
@@ -883,7 +890,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	// DX library initialization process
 	if (DxLib_Init() == -1)
 		return -1;	// Terminate immediately if an error occurs
-
+	
 	// Set the screen to the back of the screen to draw on
 	SetDrawScreen(DX_SCREEN_BACK);
 
@@ -904,6 +911,9 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		}
 		while( !CheckHitKey(KEY_INPUT_ESCAPE) &&  player.hp > 0)
 		{
+
+			startLoopTime = GetNowCount();
+
 			if ( ProcessMessage() == -1 )
 			{
 				DxLib_End();// DX library termination process
@@ -942,6 +952,13 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 			// Reflects the contents of the back screen on the front screen
 			ScreenFlip();
+
+			// maintain fps
+			endLoopTime = GetNowCount();
+			timePassed = endLoopTime - startLoopTime;
+			if (timePassed < timePerFrame)
+				WaitTimer(timePerFrame - timePassed);
+
 		}
 
 		DrawString(0,300,"GAME OVER",WHITE);
