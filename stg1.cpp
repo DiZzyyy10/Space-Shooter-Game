@@ -859,6 +859,29 @@ void FallObjectsMovementHandler()
 	}
 }
 
+//judge if the player took the falling object (ability)
+void judgeFallObject()
+{
+	double x, y;
+	int i;
+
+	for (i = 0; i < MAX_LIVES_INCREASE; i++)
+	{
+		if (!lifeUp[i].isExist)
+			continue;
+
+		x = lifeUp[i].x - player.x;
+		y = lifeUp[i].y - player.y;
+
+		if (hypot(x, y) < player.range + lifeUp[i].range && player.hp > 0)
+		{
+			lifeUp[i].isExist = false;
+
+			player.hp++;
+		}
+	}
+}
+
 void DrawFallObject()
 {
 	double x, y, angle;
@@ -924,7 +947,6 @@ void DrawEnemy()
 		DrawRotaGraph( enemy[i].x, enemy[i].y, 1.0, enemy[i].angle, enemy[i].img, TRUE ) ;
 
 	}
-
 }
 
 //Displaying Effects
@@ -1052,6 +1074,8 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			JudgeShot();
 
 			JudgeBullet();
+
+			judgeFallObject();
 
 			DrawBack();
 
