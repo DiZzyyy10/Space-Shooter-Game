@@ -442,7 +442,7 @@ void MoveShot()
 void MakeLifeItem(double x, double y)
 {
 	int i = 0;
-	int ObjectFallSpeed = 5;
+	int ObjectFallSpeed = 1;
 
 	for (i = 0; i < MAX_LIVES_INCREASE; i++)
 	{
@@ -833,6 +833,32 @@ void ActionEnemy()
 	}
 }
 
+// falling Objects' movement controller
+void FallObjectsMovementHandler()
+{
+	double x, y;
+	int i;
+
+	for (i = 0; i < MAX_LIVES_INCREASE; i++)
+	{
+		if (!lifeUp[i].isExist)
+			continue;
+
+		x = lifeUp[i].x;
+		y = lifeUp[i].y;
+
+		x = x;
+		y += lifeUp[i].fallSpeed;
+
+		if (x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
+			lifeUp[i].isExist = false;
+
+		lifeUp[i].x = x;
+		lifeUp[i].y = y;
+
+	}
+}
+
 void DrawFallObject()
 {
 	double x, y, angle;
@@ -1020,6 +1046,8 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			ActionEnemy();
 
 			MoveBullet();
+
+			FallObjectsMovementHandler();
 
 			JudgeShot();
 
