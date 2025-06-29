@@ -89,6 +89,7 @@ int bullet_snd;//sound of enemy bullets being fired
 int bom_snd1;//Explosion 1
 int bom_snd2;//Explosion 2
 int up_snd;//power-up sound
+int life_increase;//when player interact with the falling life.png object
 
 
 int targetFPS = 60; //FPS
@@ -271,6 +272,7 @@ void LoadData()
 	bom_snd1 = LoadSoundMem("bom01.wav");
 	bom_snd2 = LoadSoundMem("bom10.wav");
 	up_snd = LoadSoundMem("power00.wav");
+	life_increase = LoadSoundMem("increase_life.wav");
 
 	// Volume setting
 	ChangeVolumeSoundMem( 255*0.1, shot_snd ) ;
@@ -878,6 +880,7 @@ void judgeFallObject()
 			lifeUp[i].isExist = false;
 
 			player.hp++;
+			PlaySoundMem(life_increase, DX_PLAYTYPE_BACK); //play when player got lives_increase
 		}
 	}
 }
