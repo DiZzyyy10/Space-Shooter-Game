@@ -44,6 +44,9 @@ http://takabosoft.com/edge
 //Maximum number of the shooter
 #define MAX_PLAYER_SHOT 100
 
+//Maximum number of the lives up abilily
+#define MAX_LIVES_INCREASE 1
+
 //Bullet type
 #define NORMAL 1//Circle
 #define LASER 2//Laser
@@ -77,6 +80,7 @@ int bullet_img1,bullet_img2;//Images of Enemy Bullets
 int shot_img;//Images of Shooter Bullets
 int board_img;//Image of the frame
 int back_img;//Background Image
+int life_img; // life increase aibility's picture
 int effect_img[17];//Effects Images
 int score;
 
@@ -171,6 +175,19 @@ struct Effect
 
 struct Effect effect[MAX_EFFECT];
 
+// Increase Player's lives
+struct livesIncrease
+{
+	double x;
+	double y;
+	double fallSpeed;
+	double range;
+	int img;
+	bool isExist;
+};
+
+struct livesIncrease lifeUp[MAX_LIVES_INCREASE];
+
 void initEnemy(int i)
 {
 	enemy[i].x = 0;
@@ -222,6 +239,15 @@ void Init()
 		effect[i].max_img = 0;
 	}
 
+	for (i = 0; i < MAX_LIVES_INCREASE; i++)
+	{
+		lifeUp[i].x = 0;
+		lifeUp[i].y = 0;
+		lifeUp[i].fallSpeed = 0;
+		lifeUp[i].range = 0;
+		lifeUp[i].isExist = false;
+	}
+
 }
 
 // Function to read in image and sound files
@@ -237,6 +263,7 @@ void LoadData()
 	board_img = LoadGraph("board.png");
 	back_img = LoadGraph("back.png");
 	LoadDivGraph("effect.png",17,8,3,64,64,effect_img);
+	life_img = LoadGraph("life.png");
 
 	//sound
 	shot_snd = LoadSoundMem("push07.wav");
@@ -411,6 +438,30 @@ void MoveShot()
 	}
 }
 
+//create new life from an (x,y) coordinate and drops it slowly from that coordinate
+void MakeLifeItem(double x, double y)
+{
+	int i = 0;
+	int ObjectFallSpeed = 5;
+
+	for (i = 0; i < MAX_LIVES_INCREASE; i++)
+	{
+		if (!lifeUp[i].isExist)
+			break;
+	}
+
+	if (i == MAX_LIVES_INCREASE)
+		return;
+
+	lifeUp[i].isExist = true;
+
+	lifeUp[i].x = x;
+	lifeUp[i].y = y;
+	lifeUp[i].fallSpeed = ObjectFallSpeed;
+	lifeUp[i].range = 15;
+	lifeUp[i].img = life_img;
+}
+
 ////Hit detection process for shooter shot
 void JudgeShot()
 {
@@ -449,6 +500,9 @@ void JudgeShot()
 					PlaySoundMem( bom_snd1 , DX_PLAYTYPE_BACK ) ;//sound of an explosion
 					if (enemy[i].isBoss)
 					{
+						//spwan player life increase ability
+						MakeLifeItem(enemy[i].x, enemy[i].y);
+
 						score += SCORE_BOSS;
 						isBossExist = false;
 					}
@@ -779,6 +833,31 @@ void ActionEnemy()
 	}
 }
 
+void DrawFallObject()
+{
+	double x, y, angle;
+	int img;
+
+	int i;
+
+	//check all lives object that exists
+	for (i = 0; i < MAX_LIVES_INCREASE; i++)
+	{
+		if (!lifeUp[i].isExist)
+			continue;
+
+		x = lifeUp[i].x;
+		y = lifeUp[i].y;
+
+		angle = 0;
+
+		img = lifeUp[i].img;
+
+		// Distplay of the falling obj
+		DrawRotaGraphF((float)x, (float)y, 1.0, angle, img, TRUE);
+	}
+}
+
 //Display of Bullets
 void DrawBullet()
 {
@@ -953,6 +1032,8 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			DrawPlayer();
 
 			DrawEffect();
+
+			DrawFallObject();
 
 			DrawBullet();
 
