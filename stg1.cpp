@@ -804,27 +804,36 @@ void ActionEnemy()
 			continue;
 		}
 		enemy[i].t++;
-		switch(enemy[i].action)
-		{
-		case STOP: case CIRCLE:
-			fire = 40;
-			x = enemy[i].x;
-			y = enemy[i].y;
-			speed = 2.0;
-			way = 5;
-			range = 8;
-			//Fires a bullet every fire loop
-			if( t % fire == 0 )//Three types of barrage
-			{
-				MakeWayBullet(x+140,y,1.5,3,OMEGA( 60 ),OMEGA(90)+OMEGA(30)*sin(OMEGA(t)),3,bullet_img2);
-				MakeWayBullet(x-140,y,1.5,3,OMEGA( 60 ),OMEGA(90)+OMEGA(30)*sin(OMEGA(t)),3,bullet_img2);
-				MakeWayBullet(x,y,speed,way,OMEGA(5),TargetAnglePlayer(x,y),range,bullet_img1);
-			}
-			break;
 
+		//enemy fire contoller
+
+		if (enemy[i].isBoss)
+		{
+			switch (enemy[i].action)
+			{
+			case STOP: case CIRCLE:
+				fire = 40;
+				x = enemy[i].x;
+				y = enemy[i].y;
+				speed = 2.0;
+				way = 5;
+				range = 8;
+				//Fires a bullet every fire loop
+				if (t % fire == 0)//Three types of barrage
+				{
+					MakeWayBullet(x + 140, y, 1.5, 3, OMEGA(60), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+					MakeWayBullet(x - 140, y, 1.5, 3, OMEGA(60), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+					MakeWayBullet(x, y, speed, way, OMEGA(5), TargetAnglePlayer(x, y), range, bullet_img1);
+				}
+				break;
+			}
+		}
+
+		switch (enemy[i].action)
+		{
 		case STRAIGHT:
 			const int LEVEL_MAX_SCORE = 100000;
-			if( score > LEVEL_MAX_SCORE )
+			if (score > LEVEL_MAX_SCORE)
 				fire = 20;
 			else
 				fire = (LEVEL_MAX_SCORE - score) * 80 / LEVEL_MAX_SCORE + 20;
@@ -834,21 +843,20 @@ void ActionEnemy()
 			way = 3;
 			range = 8;
 			//Fires a bullet every fire loop
-			if( t % fire == 0 )
+			if (t % fire == 0)
 			{
-				switch(GetRand(1))//Fire a barrage of either
+				switch (GetRand(1))//Fire a barrage of either
 				{
 				case 0:
-					MakeWayBullet(x,y,speed,way,OMEGA(30),TargetAnglePlayer(x,y),range,bullet_img1);
+					MakeWayBullet(x, y, speed, way, OMEGA(30), TargetAnglePlayer(x, y), range, bullet_img1);
 					break;
 
 				case 1:
-					MakeWayBullet(x,y,speed,2*way,OMEGA(360),OMEGA( GetRand(360) ),range,bullet_img1);
+					MakeWayBullet(x, y, speed, 2 * way, OMEGA(360), OMEGA(GetRand(360)), range, bullet_img1);
 					break;
 				}
 			}
 			break;
-
 		}
 	}
 }
