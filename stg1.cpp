@@ -55,6 +55,7 @@ http://takabosoft.com/edge
 #define STOP 0
 #define STRAIGHT 1
 #define CIRCLE 2
+#define SIDETOSIDE 3
 
 //Maximum number of effects
 #define MAX_EFFECT MAX_BULLET
@@ -725,7 +726,7 @@ void MakeEnemy()
 
 		enemy[i].range = 120;
 
-		enemy[i].action = STOP;//CIRCLE;//coordinate fixation
+		enemy[i].action = SIDETOSIDE;//CIRCLE;//coordinate fixation
 
 		enemy[i].img = boss_img;
 	}
@@ -758,27 +759,37 @@ void ActionEnemy()
 
 		switch(enemy[i].action)
 		{
-		case STOP://DO nothing
-			break;
+			case STOP://DO nothing
+				break;
 
-		case STRAIGHT://Go straight in a fixed direction
+			case STRAIGHT://Go straight in a fixed direction
+			{
+				enemy[i].x += enemy[i].speed * cos( enemy[i].angle );
+				enemy[i].y += enemy[i].speed * sin( enemy[i].angle );
+				break;
+			}
 
-			enemy[i].x += enemy[i].speed * cos( enemy[i].angle );
-			enemy[i].y += enemy[i].speed * sin( enemy[i].angle );
-			break;
-
-		case CIRCLE://Go straight in a fixed direction
-			const int r = 100;
-			enemy[i].x = r * cos(OMEGA(enemy[i].t)) + enemy[i].x0;
-			enemy[i].y = r * sin(OMEGA(enemy[i].t)) + enemy[i].y0;
-			break;
-
+			case CIRCLE://Go straight in a fixed direction
+			{
+				const int r = 100;
+				enemy[i].x = r * cos(OMEGA(enemy[i].t)) + enemy[i].x0;
+				enemy[i].y = r * sin(OMEGA(enemy[i].t)) + enemy[i].y0;
+				break;
+			}
+			
+			case SIDETOSIDE:
+			{
+				const int moveAmplitute = 10; // amplitute of the side to side motion
+				enemy[i].x = moveAmplitute * cos(OMEGA(enemy[i].t)) + enemy[i].x0;
+				enemy[i].y = enemy[i].y;
+				break;
+			}
 		}
-
+		
 		x = enemy[i].x;
 		y = enemy[i].y;
 
-		//If the bullet goes off the screen, the bullet is eliminated.
+		//If the enemy goes off the screen, the enemy is eliminated.
 		if (x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
 		{
 			enemy[i].isExist = false;
