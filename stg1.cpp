@@ -770,7 +770,7 @@ void EnemyMovementController(int i)
 
 
 //control boss's fire and its patter according to each level of boss
-void BossFiringActionController(double enemyX, double enemyY, int bossLevel, double speed, double way, double range) //boss level dictates its firing pattern, and the other arguement are passed straight from "ActionEnemy()"
+void BossFiringActionController(double enemyX, double enemyY, int bossLevel) //boss level dictates its firing pattern, and the other arguement are passed straight from "ActionEnemy()"
 {
 	double x, y;
 	int i;
@@ -778,9 +778,18 @@ void BossFiringActionController(double enemyX, double enemyY, int bossLevel, dou
 	x = enemyX;
 	y = enemyY;
 
-	MakeWayBullet(x + 110, y, 1.5, 3, OMEGA(60), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
-	MakeWayBullet(x - 110, y, 1.5, 3, OMEGA(60), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
-	MakeWayBullet(x, y, speed, way, OMEGA(5), TargetAnglePlayer(x, y), range, bullet_img1);
+	switch (bossLevel)
+	{
+		case 1:
+			MakeWayBullet(x + 110, y, 1.5, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x - 110, y, 1.5, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			break;
+
+		case 2:
+			MakeWayBullet(x + 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x - 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x, y, 1.0, 2, OMEGA(5), TargetAnglePlayer(x, y), 8, bullet_img1);
+	}
 }
 
 // Enemy Actions
@@ -835,7 +844,7 @@ void ActionEnemy()
 				//Fires a bullet every fire loop
 				if (t % fire == 0)//Three types of barrage
 				{
-					BossFiringActionController(x, y, 1, speed, way, range);
+					BossFiringActionController(x, y, 2);
 				}
 				break;
 			}
