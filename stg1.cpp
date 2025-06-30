@@ -351,7 +351,7 @@ void MakeWayShot(double speed, int power, double range, int way, double wide_ang
 		return;
 	}
 	
-	for( i = 0; i < way; i++)
+	for( i = 0; i < way; i++) 
 	{
 		if( wide_angle == OMEGA(360))
 			w_angle = main_angle + i * wide_angle / way;//Launch angle
@@ -1075,7 +1075,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			FallObjectsMovementHandler();
 
 			JudgeShot();
-
+			 
 			JudgeBullet();
 
 			judgeFallObject();
