@@ -723,7 +723,7 @@ void MakeEnemy()
 		enemy[i].angle = OMEGA( 90 );//pointing down
 		enemy[i].speed = 0;
 
-		enemy[i].range = 130;
+		enemy[i].range = 120;
 
 		enemy[i].action = STOP;//CIRCLE;//coordinate fixation
 
