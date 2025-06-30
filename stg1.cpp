@@ -735,6 +735,40 @@ void MakeEnemy()
 }
 
 
+// All enemies movement controller
+void EnemyMovementController(int i)
+{
+	switch (enemy[i].action)
+	{
+	case STOP://DO nothing
+		break;
+
+	case STRAIGHT://Go straight in a fixed direction
+	{
+		enemy[i].x += enemy[i].speed * cos(enemy[i].angle);
+		enemy[i].y += enemy[i].speed * sin(enemy[i].angle);
+		break;
+	}
+
+	case CIRCLE://Go straight in a fixed direction
+	{
+		const int r = 100;
+		enemy[i].x = r * cos(OMEGA(enemy[i].t)) + enemy[i].x0;
+		enemy[i].y = r * sin(OMEGA(enemy[i].t)) + enemy[i].y0;
+		break;
+	}
+
+	case SIDETOSIDE:
+	{
+		const int moveAmplitute = 10; // amplitute of the side to side motion
+		enemy[i].x = moveAmplitute * cos(OMEGA(enemy[i].t)) + enemy[i].x0;
+		enemy[i].y = enemy[i].y;
+		break;
+	}
+	}
+}
+
+
 // Enemy Actions
 void ActionEnemy()
 {
@@ -757,34 +791,7 @@ void ActionEnemy()
 		if( !enemy[i].isExist )//If there is an enemy, move on to the next.
 			continue;
 
-		switch(enemy[i].action)
-		{
-			case STOP://DO nothing
-				break;
-
-			case STRAIGHT://Go straight in a fixed direction
-			{
-				enemy[i].x += enemy[i].speed * cos( enemy[i].angle );
-				enemy[i].y += enemy[i].speed * sin( enemy[i].angle );
-				break;
-			}
-
-			case CIRCLE://Go straight in a fixed direction
-			{
-				const int r = 100;
-				enemy[i].x = r * cos(OMEGA(enemy[i].t)) + enemy[i].x0;
-				enemy[i].y = r * sin(OMEGA(enemy[i].t)) + enemy[i].y0;
-				break;
-			}
-			
-			case SIDETOSIDE:
-			{
-				const int moveAmplitute = 10; // amplitute of the side to side motion
-				enemy[i].x = moveAmplitute * cos(OMEGA(enemy[i].t)) + enemy[i].x0;
-				enemy[i].y = enemy[i].y;
-				break;
-			}
-		}
+		EnemyMovementController(i); //control all enemies movement
 		
 		x = enemy[i].x;
 		y = enemy[i].y;
