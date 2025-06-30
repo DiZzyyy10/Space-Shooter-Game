@@ -67,7 +67,11 @@ http://takabosoft.com/edge
 #define LEVEL_UP_SCORE 300 //Level up for each of this score.(100 points for 1 enemy)
 
 #define BORN1 20 // Frequency of Enemy Appearance
-#define BORN2 1000 // Frequency of Boss Appearance
+#define BASESCORETONEVERLETBOSSSPAWN 1000 //set anything above 10 should be okay, this is to not let the if statement in MakeEnemy() spawns boss right immidietly after the game start because of the modulo "%" condition is met
+#define BOSSLEVEL1 3000 // score at which level 1 boss spawn
+#define BOSSLEVEL2 2*BOSSLEVEL1 // score at which level 2 boss spawn
+#define BOSSLEVEL3 3*BOSSLEVEL1 // score at which level 3 boss spawn
+#define BOSSFREQ 3000 // the frequency at which the boss will spawn, the smaller the more freq, the bigger the less freq
 
 #define SCORE_BOSS 2000
 #define SCORE_ENEMY 100
@@ -699,7 +703,7 @@ void MakeEnemy()
 	}
 
 	//Large enemy (Boss)
-	if( t % BORN2 == 0 && t > 0 && !isBossExist )
+	if( score % BOSSFREQ == 0 && t > 0 && !isBossExist && score > BASESCORETONEVERLETBOSSSPAWN) //the last condition is to not let the boss spawn right after the game just started
 	{
 		for(i = 0;i < MAX_ENEMY; i++)
 		{
@@ -709,7 +713,20 @@ void MakeEnemy()
 
 		if( i == MAX_ENEMY )
 			return ;
+		
+		// we are sure that this enemy[i] is going to be the boss---
 
+		// setting hp accoring to each level
+		if (score == BOSSLEVEL1)
+			enemy[i].hp = 200;
+		else if (score == BOSSLEVEL2)
+			enemy[i].hp = 400;
+		else if (score == BOSSLEVEL3)
+			enemy[i].hp = 600;
+		else						//incase the if condition failed
+			enemy[i].hp;
+
+		//boss innit
 		isBossExist = true;
 		enemy[i].isExist = true;
 		enemy[i].isBoss = true;
@@ -719,7 +736,7 @@ void MakeEnemy()
 		enemy[i].x = enemy[i].x0;
 		enemy[i].y = enemy[i].y0;
 
-		enemy[i].hp = 200;
+		
 
 		enemy[i].angle = OMEGA( 90 );//pointing down
 		enemy[i].speed = 0;
@@ -781,8 +798,8 @@ void BossFiringActionController(double enemyX, double enemyY, int bossLevel) //b
 	switch (bossLevel)
 	{
 		case 1:
-			MakeWayBullet(x + 110, y, 1.5, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
-			MakeWayBullet(x - 110, y, 1.5, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x + 110, y, 1.0, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x - 110, y, 1.0, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
 			break;
 
 		case 2:
