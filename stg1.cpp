@@ -47,9 +47,6 @@ http://takabosoft.com/edge
 //Maximum number of the lives up abilily
 #define MAX_LIVES_INCREASE 1
 
-//max number of bullets for golden pi pattern
-#define MAX_BULLET_FOR_GOLDEN_PI 20
-
 //Bullet type
 #define NORMAL 1//Circle
 #define LASER 2//Laser
@@ -684,7 +681,7 @@ void MoveBullet()
 			//r(t):
 			int Rmax = 90 ;
 			int bulletAge = t - bullet[i].creationTime;
-			double Rt = Rmax / (1 + (40 * pow(M_E, -0.5 * bulletAge)));
+			double Rt = Rmax / (1 + (10 * pow(M_E, -0.07 * bulletAge)));
 
 			//x(t) and y(t)
 			bullet[i].x = Rt * cos(bullet[i].angle * OMEGA(bulletAge)) + bullet[i].originX;
