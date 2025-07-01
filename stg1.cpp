@@ -47,6 +47,9 @@ http://takabosoft.com/edge
 //Maximum number of the lives up abilily
 #define MAX_LIVES_INCREASE 1
 
+//max number of bullets for golden pi pattern
+#define MAX_BULLET_FOR_GOLDEN_PI 20
+
 //Bullet type
 #define NORMAL 1//Circle
 #define LASER 2//Laser
@@ -632,7 +635,7 @@ void MakeGoldenPiBullet(double x, double y, double range, double W, int img)
 			break;
 		}
 	}
-	if (i == MAX_BULLET) // max number of bullet is reached, won't spawn the new ones
+	if (i == MAX_BULLET) // max TOTAL NUMBER of bullet is reached, won't spawn the new ones
 		return;
 
 	bullet[i].angle = W; //omega
