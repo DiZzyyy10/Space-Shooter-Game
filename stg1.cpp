@@ -55,6 +55,11 @@ http://takabosoft.com/edge
 #define STOP 0
 #define STRAIGHT 1
 #define CIRCLE 2
+#define SIDETOSIDE 3
+
+// Bullet Pattern
+#define BULLET_LINEAR 1
+#define BULLET_GOLDEN_PI 2
 
 //Maximum number of effects
 #define MAX_EFFECT MAX_BULLET
@@ -66,7 +71,11 @@ http://takabosoft.com/edge
 #define LEVEL_UP_SCORE 300 //Level up for each of this score.(100 points for 1 enemy)
 
 #define BORN1 20 // Frequency of Enemy Appearance
-#define BORN2 1000 // Frequency of Boss Appearance
+#define BASESCORETONEVERLETBOSSSPAWN 1000 //set anything above 10 should be okay, this is to not let the if statement in MakeEnemy() spawns boss right immidietly after the game start because of the modulo "%" condition is met
+#define BOSSLEVEL1 3000 // score at which level 1 boss spawn
+#define BOSSLEVEL2 2*BOSSLEVEL1 // score at which level 2 boss spawn
+#define BOSSLEVEL3 3*BOSSLEVEL1 // score at which level 3 boss spawn
+#define BOSSFREQ 3000 // the frequency at which the boss will spawn, the smaller the more freq, the bigger the less freq
 
 #define SCORE_BOSS 2000
 #define SCORE_ENEMY 100
@@ -157,8 +166,15 @@ struct Bullet
 	double angle;
 	double speed;
 	double range;//collision detection radius
-	int img;//image
 	bool isExist;//true if present, false if not present
+	int img;//image
+	int pattern; // Stores the bullet pattern (linear or goldenPi)
+	
+
+	//for special type of pattern
+	double originX;
+	double originY;
+	int creationTime;
 };
 
 struct Bullet bullet[MAX_BULLET];//Bullets
@@ -201,6 +217,21 @@ void initEnemy(int i)
 	enemy[i].isBoss = false;
 	enemy[i].t = 0;
 }
+
+//init bullet info
+void InitBullet(int i)
+{
+	bullet[i].x = 0;
+	bullet[i].y = 0;
+	bullet[i].angle = 0;
+	bullet[i].speed = 0;
+	bullet[i].range = 0;
+	bullet[i].isExist = false;
+	bullet[i].originX = 0;
+	bullet[i].originY = 0;
+	bullet[i].creationTime = 0;
+}
+
 //Initialization
 void Init()
 {
@@ -224,15 +255,11 @@ void Init()
 	}
 
 	//Bullet initialization
+	//
 	//Effects initialization
 	for(i = 0; i < MAX_BULLET; i++)
 	{
-		bullet[i].isExist = false;
-		bullet[i].x = 0;
-		bullet[i].y = 0;
-		bullet[i].speed = 0;
-		bullet[i].angle = 0;
-		bullet[i].range = 0;
+		InitBullet(i);
 
 		effect[i].isExist = false;
 		effect[i].x = 0;
@@ -351,7 +378,7 @@ void MakeWayShot(double speed, int power, double range, int way, double wide_ang
 		return;
 	}
 	
-	for( i = 0; i < way; i++)
+	for( i = 0; i < way; i++) 
 	{
 		if( wide_angle == OMEGA(360))
 			w_angle = main_angle + i * wide_angle / way;//Launch angle
@@ -464,7 +491,7 @@ void MakeLifeItem(double x, double y)
 	lifeUp[i].img = life_img;
 }
 
-////Hit detection process for shooter shot
+////Hit detection process for PLAYER shot
 void JudgeShot()
 {
 	int i,j;
@@ -593,6 +620,46 @@ void MakeWayBullet(double x, double y, double speed, int way, double wide_angle 
 
 }
 
+// make boss's golden pi pattern's bullets
+void MakeGoldenPiBullet(double x, double y, double range, double W, int img)
+{
+	int i;
+
+	for (i = 0; i < MAX_BULLET; i++)
+	{
+		if (!bullet[i].isExist)
+		{
+			break;
+		}
+	}
+	if (i == MAX_BULLET) // max TOTAL NUMBER of bullet is reached, won't spawn the new ones
+		return;
+
+	bullet[i].angle = W; //omega
+	bullet[i].speed = 1.5;
+	bullet[i].range = range;
+	bullet[i].isExist = true;
+	bullet[i].img = img;
+	bullet[i].pattern = BULLET_GOLDEN_PI;
+	
+	
+	bullet[i].originX = x;
+	bullet[i].originY = y;
+	bullet[i].creationTime = t;
+}
+
+
+//check if a bullet is outside the window, if so delete
+void CheckIfBulletIsStillInsideTheWindowArea(double x, double y, int i)
+{
+	if (x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
+	{
+		//reset everything back
+		InitBullet(i);
+	}
+
+}
+
 //Movement of Bullets
 void MoveBullet()
 {
@@ -606,6 +673,27 @@ void MoveBullet()
 		if( !bullet[i].isExist )
 			continue;
 
+		if (bullet[i].pattern == BULLET_GOLDEN_PI)
+		{
+			// we are sure that this bullet[i] is the one for golden pi
+
+			//preping function
+			//r(t):
+			int Rmax = 90 ;
+			int bulletAge = t - bullet[i].creationTime;
+			double Rt = Rmax / (1 + (10 * pow(M_E, -0.07 * bulletAge)));
+
+			//x(t) and y(t)
+			bullet[i].x = Rt * cos(bullet[i].angle * OMEGA(bulletAge)) + bullet[i].originX;
+			bullet[i].y = Rt * sin(bullet[i].angle * OMEGA(bulletAge)) + bullet[i].originY;
+
+			CheckIfBulletIsStillInsideTheWindowArea(bullet[i].x, bullet[i].y, i);
+
+			// end the code for the golden pi bullet here, do not want it to be executed again down below,
+			//which are for linear bullet patterns only
+			continue;
+		}
+
 		x = bullet[i].x;
 		y = bullet[i].y;
 
@@ -615,9 +703,7 @@ void MoveBullet()
 		x += bullet[i].speed * cos( angle );
 		y += bullet[i].speed * sin( angle );
 
-		//If the bullet goes off the screen, the bullet is eliminated
-		if( x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
-			bullet[i].isExist = false;
+		CheckIfBulletIsStillInsideTheWindowArea(x, y, i);
 
 		bullet[i].x = x;
 		bullet[i].y = y;
@@ -639,11 +725,11 @@ void JudgeBullet()
 		x = bullet[i].x - player.x;
 		y = bullet[i].y - player.y;
 
-		//If the shooter is not in the process of being hit and the hit points make contact.
+		//If the player got hit
 		if( hypot (x,y) < player.range + bullet[i].range && !player.isDamage)
 		{
 			MakeEffect(player.x, player.y, 17);
-			bullet[i].isExist = false;
+			InitBullet(i);
 			player.isDamage = true;
 
 			player.hp--;
@@ -659,7 +745,7 @@ void EraseBullet()
 	int i;
 
 	for(i = 0; i < MAX_BULLET; i++)
-		bullet[i].isExist = false;
+		InitBullet(i);
 }
 
 //Appearance of the Enemy
@@ -697,8 +783,8 @@ void MakeEnemy()
 		enemy[i].img = enemy_img;
 	}
 
-	//Large enemy (Boss)
-	if( t % BORN2 == 0 && t > 0 && !isBossExist )
+	// Boss spawns every BOSSFREQ score earned
+	if( score % BOSSFREQ == 0 && t > 0 && !isBossExist && score > BASESCORETONEVERLETBOSSSPAWN) //the last condition is to not let the boss spawn right after the game just started
 	{
 		for(i = 0;i < MAX_ENEMY; i++)
 		{
@@ -708,7 +794,20 @@ void MakeEnemy()
 
 		if( i == MAX_ENEMY )
 			return ;
+		
+		// we are sure that this enemy[i] is going to be the boss---
 
+		// setting hp accoring to each level
+		if (score == BOSSLEVEL1)
+			enemy[i].hp = 200;
+		else if (score == BOSSLEVEL2)
+			enemy[i].hp = 400;
+		else if (score == BOSSLEVEL3)
+			enemy[i].hp = 600;
+		else						//highest level boss?
+			enemy[i].hp = 800;
+
+		//boss innit
 		isBossExist = true;
 		enemy[i].isExist = true;
 		enemy[i].isBoss = true;
@@ -718,14 +817,14 @@ void MakeEnemy()
 		enemy[i].x = enemy[i].x0;
 		enemy[i].y = enemy[i].y0;
 
-		enemy[i].hp = 200;
+		
 
 		enemy[i].angle = OMEGA( 90 );//pointing down
 		enemy[i].speed = 0;
 
-		enemy[i].range = 130;
+		enemy[i].range = 120;
 
-		enemy[i].action = STOP;//CIRCLE;//coordinate fixation
+		enemy[i].action = SIDETOSIDE;//CIRCLE;//coordinate fixation
 
 		enemy[i].img = boss_img;
 	}
@@ -733,6 +832,82 @@ void MakeEnemy()
 
 }
 
+
+// All enemies movement controller
+void EnemyMovementController(int i)
+{
+	switch (enemy[i].action)
+	{
+	case STOP://DO nothing
+		break;
+
+	case STRAIGHT://Go straight in a fixed direction
+	{
+		enemy[i].x += enemy[i].speed * cos(enemy[i].angle);
+		enemy[i].y += enemy[i].speed * sin(enemy[i].angle);
+		break;
+	}
+
+	case CIRCLE://Go straight in a fixed direction
+	{
+		const int r = 100;
+		enemy[i].x = r * cos(OMEGA(enemy[i].t)) + enemy[i].x0;
+		enemy[i].y = r * sin(OMEGA(enemy[i].t)) + enemy[i].y0;
+		break;
+	}
+
+	case SIDETOSIDE:
+	{
+		const int moveAmplitute = 10; // amplitute of the side to side motion
+		enemy[i].x = moveAmplitute * cos(OMEGA(enemy[i].t)) + enemy[i].x0;
+		enemy[i].y = enemy[i].y;
+		break;
+	}
+	}
+}
+
+
+//control boss's fire and its patter according to each level of boss
+void BossFiringActionController(double enemyX, double enemyY) //boss level dictates its firing pattern, and the other arguement are passed straight from "ActionEnemy()"
+{
+	double x, y;
+	int i;
+	int bossLevel;
+	
+	// boss coordinate
+	x = enemyX;
+	y = enemyY;
+
+	// Calculating boss level using "score"
+	bossLevel = (score) / 3000;
+
+	switch (bossLevel)
+	{
+		case 1:
+			MakeWayBullet(x + 110, y, 1.0, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x - 110, y, 1.0, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeGoldenPiBullet(x, y, 3, 0.5, bullet_img1);
+			break;
+
+		case 2:
+			MakeWayBullet(x + 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x - 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x, y, 1.0, 2, OMEGA(5), TargetAnglePlayer(x, y), 8, bullet_img1);
+			break;
+
+		case 3:
+			MakeWayBullet(x + 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x - 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x, y, 1.0, 2, OMEGA(5), TargetAnglePlayer(x, y), 8, bullet_img1);
+			break;
+
+		default:
+			MakeWayBullet(x + 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x - 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x, y, 1.0, 2, OMEGA(5), TargetAnglePlayer(x, y), 8, bullet_img1);
+			break;
+	}
+}
 
 // Enemy Actions
 void ActionEnemy()
@@ -756,29 +931,12 @@ void ActionEnemy()
 		if( !enemy[i].isExist )//If there is an enemy, move on to the next.
 			continue;
 
-		switch(enemy[i].action)
-		{
-		case STOP://DO nothing
-			break;
-
-		case STRAIGHT://Go straight in a fixed direction
-
-			enemy[i].x += enemy[i].speed * cos( enemy[i].angle );
-			enemy[i].y += enemy[i].speed * sin( enemy[i].angle );
-			break;
-
-		case CIRCLE://Go straight in a fixed direction
-			const int r = 100;
-			enemy[i].x = r * cos(OMEGA(enemy[i].t)) + enemy[i].x0;
-			enemy[i].y = r * sin(OMEGA(enemy[i].t)) + enemy[i].y0;
-			break;
-
-		}
-
+		EnemyMovementController(i); //control all enemies movement
+		
 		x = enemy[i].x;
 		y = enemy[i].y;
 
-		//If the bullet goes off the screen, the bullet is eliminated.
+		//If the enemy goes off the screen, the enemy is eliminated.
 		if (x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
 		{
 			enemy[i].isExist = false;
@@ -786,27 +944,32 @@ void ActionEnemy()
 			continue;
 		}
 		enemy[i].t++;
-		switch(enemy[i].action)
-		{
-		case STOP: case CIRCLE:
-			fire = 40;
-			x = enemy[i].x;
-			y = enemy[i].y;
-			speed = 2.0;
-			way = 5;
-			range = 8;
-			//Fires a bullet every fire loop
-			if( t % fire == 0 )//Three types of barrage
-			{
-				MakeWayBullet(x+140,y,1.5,3,OMEGA( 60 ),OMEGA(90)+OMEGA(30)*sin(OMEGA(t)),3,bullet_img2);
-				MakeWayBullet(x-140,y,1.5,3,OMEGA( 60 ),OMEGA(90)+OMEGA(30)*sin(OMEGA(t)),3,bullet_img2);
-				MakeWayBullet(x,y,speed,way,OMEGA(5),TargetAnglePlayer(x,y),range,bullet_img1);
-			}
-			break;
 
+		//enemy fire contoller
+		if (enemy[i].isBoss)
+		{
+			switch (enemy[i].action)
+			{
+			case STOP: case CIRCLE: case SIDETOSIDE:
+				fire = 40;
+
+				speed = 2.0;
+				way = 5;
+				range = 8;
+				//Fires a bullet every fire loop
+				if (t % fire == 0)
+				{
+					BossFiringActionController(x, y);
+				}
+				break;
+			}
+		}
+
+		switch (enemy[i].action)
+		{
 		case STRAIGHT:
 			const int LEVEL_MAX_SCORE = 100000;
-			if( score > LEVEL_MAX_SCORE )
+			if (score > LEVEL_MAX_SCORE)
 				fire = 20;
 			else
 				fire = (LEVEL_MAX_SCORE - score) * 80 / LEVEL_MAX_SCORE + 20;
@@ -816,21 +979,20 @@ void ActionEnemy()
 			way = 3;
 			range = 8;
 			//Fires a bullet every fire loop
-			if( t % fire == 0 )
+			if (t % fire == 0)
 			{
-				switch(GetRand(1))//Fire a barrage of either
+				switch (GetRand(1))//Fire a barrage of either
 				{
 				case 0:
-					MakeWayBullet(x,y,speed,way,OMEGA(30),TargetAnglePlayer(x,y),range,bullet_img1);
+					MakeWayBullet(x, y, speed, way, OMEGA(30), TargetAnglePlayer(x, y), range, bullet_img1);
 					break;
 
 				case 1:
-					MakeWayBullet(x,y,speed,2*way,OMEGA(360),OMEGA( GetRand(360) ),range,bullet_img1);
+					MakeWayBullet(x, y, speed, 2 * way, OMEGA(360), OMEGA(GetRand(360)), range, bullet_img1);
 					break;
 				}
 			}
 			break;
-
 		}
 	}
 }
@@ -1075,7 +1237,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			FallObjectsMovementHandler();
 
 			JudgeShot();
-
+			 
 			JudgeBullet();
 
 			judgeFallObject();
