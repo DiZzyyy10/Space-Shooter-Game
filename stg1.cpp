@@ -250,7 +250,6 @@ void Init()
 		bullet[i].speed = 0;
 		bullet[i].range = 0;
 		bullet[i].isExist = false;
-		bullet[i].img = 0;
 		bullet[i].originX = 0;
 		bullet[i].originY = 0;
 		bullet[i].creationTime = 0;
@@ -633,7 +632,7 @@ void MakeGoldenPiBullet(double x, double y, double range, double W, int img)
 	bullet[i].speed = 1.5;
 	bullet[i].range = range;
 	bullet[i].isExist = true;
-	bullet[i].img = bullet_img2;
+	bullet[i].img = img;
 	bullet[i].pattern = BULLET_GOLDEN_PI;
 	
 	
@@ -661,13 +660,13 @@ void MoveBullet()
 
 			//preping function
 			//r(t):
-			int Rmax = 100;
+			int Rmax = 90 ;
 			int bulletAge = t - bullet[i].creationTime;
 			double Rt = Rmax / (1 + (40 * pow(M_E, -0.5 * bulletAge)));
 
 			//x(t) and y(t)
-			bullet[i].x = Rt * cos(bullet[i].angle * bulletAge) + bullet[i].originX;
-			bullet[i].y = Rt * sin(bullet[i].angle * bulletAge) + bullet[i].originY;
+			bullet[i].x = Rt * cos(bullet[i].angle * OMEGA(bulletAge)) + bullet[i].originX;
+			bullet[i].y = Rt * sin(bullet[i].angle * OMEGA(bulletAge)) + bullet[i].originY;
 
 			// end the code for the golden pi bullet here, do not want it to be executed again down below,
 			//which are for linear bullet patterns only
@@ -868,7 +867,7 @@ void BossFiringActionController(double enemyX, double enemyY) //boss level dicta
 		case 1:
 			MakeWayBullet(x + 110, y, 1.0, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
 			MakeWayBullet(x - 110, y, 1.0, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
-			MakeGoldenPiBullet(x, y, 3, 1, bullet_img2);
+			MakeGoldenPiBullet(x, y, 3, 0.5, bullet_img1);
 			break;
 
 		case 2:
