@@ -217,6 +217,21 @@ void initEnemy(int i)
 	enemy[i].isBoss = false;
 	enemy[i].t = 0;
 }
+
+//init bullet info
+void InitBullet(int i)
+{
+	bullet[i].x = 0;
+	bullet[i].y = 0;
+	bullet[i].angle = 0;
+	bullet[i].speed = 0;
+	bullet[i].range = 0;
+	bullet[i].isExist = false;
+	bullet[i].originX = 0;
+	bullet[i].originY = 0;
+	bullet[i].creationTime = 0;
+}
+
 //Initialization
 void Init()
 {
@@ -244,15 +259,7 @@ void Init()
 	//Effects initialization
 	for(i = 0; i < MAX_BULLET; i++)
 	{
-		bullet[i].x = 0;
-		bullet[i].y = 0;
-		bullet[i].angle = 0;
-		bullet[i].speed = 0;
-		bullet[i].range = 0;
-		bullet[i].isExist = false;
-		bullet[i].originX = 0;
-		bullet[i].originY = 0;
-		bullet[i].creationTime = 0;
+		InitBullet(i);
 
 		effect[i].isExist = false;
 		effect[i].x = 0;
@@ -484,7 +491,7 @@ void MakeLifeItem(double x, double y)
 	lifeUp[i].img = life_img;
 }
 
-////Hit detection process for shooter shot
+////Hit detection process for PLAYER shot
 void JudgeShot()
 {
 	int i,j;
@@ -641,6 +648,18 @@ void MakeGoldenPiBullet(double x, double y, double range, double W, int img)
 	bullet[i].creationTime = t;
 }
 
+
+//check if a bullet is outside the window, if so delete
+void CheckIfBulletIsStillInsideTheWindowArea(double x, double y, int i)
+{
+	if (x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
+	{
+		//reset everything back
+		InitBullet(i);
+	}
+
+}
+
 //Movement of Bullets
 void MoveBullet()
 {
@@ -668,6 +687,8 @@ void MoveBullet()
 			bullet[i].x = Rt * cos(bullet[i].angle * OMEGA(bulletAge)) + bullet[i].originX;
 			bullet[i].y = Rt * sin(bullet[i].angle * OMEGA(bulletAge)) + bullet[i].originY;
 
+			CheckIfBulletIsStillInsideTheWindowArea(bullet[i].x, bullet[i].y, i);
+
 			// end the code for the golden pi bullet here, do not want it to be executed again down below,
 			//which are for linear bullet patterns only
 			continue;
@@ -682,9 +703,7 @@ void MoveBullet()
 		x += bullet[i].speed * cos( angle );
 		y += bullet[i].speed * sin( angle );
 
-		//If the bullet goes off the screen, the bullet is eliminated
-		if( x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
-			bullet[i].isExist = false;
+		CheckIfBulletIsStillInsideTheWindowArea(x, y, i);
 
 		bullet[i].x = x;
 		bullet[i].y = y;
@@ -706,11 +725,11 @@ void JudgeBullet()
 		x = bullet[i].x - player.x;
 		y = bullet[i].y - player.y;
 
-		//If the shooter is not in the process of being hit and the hit points make contact.
+		//If the player got hit
 		if( hypot (x,y) < player.range + bullet[i].range && !player.isDamage)
 		{
 			MakeEffect(player.x, player.y, 17);
-			bullet[i].isExist = false;
+			InitBullet(i);
 			player.isDamage = true;
 
 			player.hp--;
@@ -726,7 +745,7 @@ void EraseBullet()
 	int i;
 
 	for(i = 0; i < MAX_BULLET; i++)
-		bullet[i].isExist = false;
+		InitBullet(i);
 }
 
 //Appearance of the Enemy
