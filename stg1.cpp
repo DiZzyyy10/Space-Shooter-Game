@@ -57,6 +57,10 @@ http://takabosoft.com/edge
 #define CIRCLE 2
 #define SIDETOSIDE 3
 
+// Bullet Pattern
+#define BULLET_LINEAR 1
+#define BULLET_GOLDEN_PI 2
+
 //Maximum number of effects
 #define MAX_EFFECT MAX_BULLET
 
@@ -162,8 +166,15 @@ struct Bullet
 	double angle;
 	double speed;
 	double range;//collision detection radius
-	int img;//image
 	bool isExist;//true if present, false if not present
+	int img;//image
+	int pattern; // Stores the bullet pattern (linear or goldenPi)
+	
+
+	//for special type of pattern
+	double originX;
+	double originY;
+	int creationTime;
 };
 
 struct Bullet bullet[MAX_BULLET];//Bullets
@@ -229,15 +240,20 @@ void Init()
 	}
 
 	//Bullet initialization
+	//
 	//Effects initialization
 	for(i = 0; i < MAX_BULLET; i++)
 	{
-		bullet[i].isExist = false;
 		bullet[i].x = 0;
 		bullet[i].y = 0;
-		bullet[i].speed = 0;
 		bullet[i].angle = 0;
+		bullet[i].speed = 0;
 		bullet[i].range = 0;
+		bullet[i].isExist = false;
+		bullet[i].img = 0;
+		bullet[i].originX = 0;
+		bullet[i].originY = 0;
+		bullet[i].creationTime = 0;
 
 		effect[i].isExist = false;
 		effect[i].x = 0;
