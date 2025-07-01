@@ -614,6 +614,34 @@ void MakeWayBullet(double x, double y, double speed, int way, double wide_angle 
 
 }
 
+// make boss's golden pi pattern's bullets
+void MakeGoldenPiBullet(double x, double y, double range, double W, int img)
+{
+	int i;
+
+	for (i = 0; i < MAX_BULLET; i++)
+	{
+		if (!bullet[i].isExist)
+		{
+			break;
+		}
+	}
+	if (i == MAX_BULLET) // max number of bullet is reached, won't spawn the new ones
+		return;
+
+	bullet[i].angle = W; //omega
+	bullet[i].speed = 1.5;
+	bullet[i].range = range;
+	bullet[i].isExist = true;
+	bullet[i].img = bullet_img2;
+	bullet[i].pattern = BULLET_GOLDEN_PI;
+	
+	
+	bullet[i].originX = x;
+	bullet[i].originY = y;
+	bullet[i].creationTime = t;
+}
+
 //Movement of Bullets
 void MoveBullet()
 {
@@ -626,6 +654,25 @@ void MoveBullet()
 	{
 		if( !bullet[i].isExist )
 			continue;
+
+		if (bullet[i].pattern == BULLET_GOLDEN_PI)
+		{
+			// we are sure that this bullet[i] is the one for golden pi
+
+			//preping function
+			//r(t):
+			int Rmax = 100;
+			int bulletAge = t - bullet[i].creationTime;
+			double Rt = Rmax / (1 + (40 * pow(M_E, -0.5 * bulletAge)));
+
+			//x(t) and y(t)
+			bullet[i].x = Rt * cos(bullet[i].angle * bulletAge) + bullet[i].originX;
+			bullet[i].y = Rt * sin(bullet[i].angle * bulletAge) + bullet[i].originY;
+
+			// end the code for the golden pi bullet here, do not want it to be executed again down below,
+			//which are for linear bullet patterns only
+			continue;
+		}
 
 		x = bullet[i].x;
 		y = bullet[i].y;
@@ -814,29 +861,33 @@ void BossFiringActionController(double enemyX, double enemyY) //boss level dicta
 	y = enemyY;
 
 	// Calculating boss level using "score"
-	bossLevel = (score + BOSSLEVEL1) / 3000;
+	bossLevel = (score) / 3000;
 
 	switch (bossLevel)
 	{
 		case 1:
 			MakeWayBullet(x + 110, y, 1.0, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
 			MakeWayBullet(x - 110, y, 1.0, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeGoldenPiBullet(x, y, 3, 1, bullet_img2);
 			break;
 
 		case 2:
 			MakeWayBullet(x + 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
 			MakeWayBullet(x - 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
 			MakeWayBullet(x, y, 1.0, 2, OMEGA(5), TargetAnglePlayer(x, y), 8, bullet_img1);
+			break;
 
 		case 3:
 			MakeWayBullet(x + 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
 			MakeWayBullet(x - 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
 			MakeWayBullet(x, y, 1.0, 2, OMEGA(5), TargetAnglePlayer(x, y), 8, bullet_img1);
+			break;
 
 		default:
 			MakeWayBullet(x + 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
 			MakeWayBullet(x - 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
 			MakeWayBullet(x, y, 1.0, 2, OMEGA(5), TargetAnglePlayer(x, y), 8, bullet_img1);
+			break;
 	}
 }
 
