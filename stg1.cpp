@@ -702,7 +702,7 @@ void MakeEnemy()
 		enemy[i].img = enemy_img;
 	}
 
-	//Large enemy (Boss)
+	// Boss spawns every BOSSFREQ score earned
 	if( score % BOSSFREQ == 0 && t > 0 && !isBossExist && score > BASESCORETONEVERLETBOSSSPAWN) //the last condition is to not let the boss spawn right after the game just started
 	{
 		for(i = 0;i < MAX_ENEMY; i++)
@@ -723,8 +723,8 @@ void MakeEnemy()
 			enemy[i].hp = 400;
 		else if (score == BOSSLEVEL3)
 			enemy[i].hp = 600;
-		else						//incase the if condition failed
-			enemy[i].hp;
+		else						//highest level boss?
+			enemy[i].hp = 800;
 
 		//boss innit
 		isBossExist = true;
@@ -787,13 +787,18 @@ void EnemyMovementController(int i)
 
 
 //control boss's fire and its patter according to each level of boss
-void BossFiringActionController(double enemyX, double enemyY, int bossLevel) //boss level dictates its firing pattern, and the other arguement are passed straight from "ActionEnemy()"
+void BossFiringActionController(double enemyX, double enemyY) //boss level dictates its firing pattern, and the other arguement are passed straight from "ActionEnemy()"
 {
 	double x, y;
 	int i;
+	int bossLevel;
 	
+	// boss coordinate
 	x = enemyX;
 	y = enemyY;
+
+	// Calculating boss level using "score"
+	bossLevel = (score + BOSSLEVEL1) / 3000;
 
 	switch (bossLevel)
 	{
@@ -803,6 +808,16 @@ void BossFiringActionController(double enemyX, double enemyY, int bossLevel) //b
 			break;
 
 		case 2:
+			MakeWayBullet(x + 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x - 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x, y, 1.0, 2, OMEGA(5), TargetAnglePlayer(x, y), 8, bullet_img1);
+
+		case 3:
+			MakeWayBullet(x + 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x - 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
+			MakeWayBullet(x, y, 1.0, 2, OMEGA(5), TargetAnglePlayer(x, y), 8, bullet_img1);
+
+		default:
 			MakeWayBullet(x + 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
 			MakeWayBullet(x - 110, y, 1, 2, OMEGA(50), OMEGA(90) + OMEGA(30) * sin(OMEGA(t)), 3, bullet_img2);
 			MakeWayBullet(x, y, 1.0, 2, OMEGA(5), TargetAnglePlayer(x, y), 8, bullet_img1);
@@ -846,22 +861,20 @@ void ActionEnemy()
 		enemy[i].t++;
 
 		//enemy fire contoller
-
 		if (enemy[i].isBoss)
 		{
 			switch (enemy[i].action)
 			{
 			case STOP: case CIRCLE: case SIDETOSIDE:
 				fire = 40;
-				x = enemy[i].x;
-				y = enemy[i].y;
+
 				speed = 2.0;
 				way = 5;
 				range = 8;
 				//Fires a bullet every fire loop
-				if (t % fire == 0)//Three types of barrage
+				if (t % fire == 0)
 				{
-					BossFiringActionController(x, y, 2);
+					BossFiringActionController(x, y);
 				}
 				break;
 			}
