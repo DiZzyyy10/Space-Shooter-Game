@@ -561,8 +561,9 @@ void MakePowerUpItem(double x, double y) //type: 1 (powerful bullet), type: 2 ..
 	powerUp[i].y = y;
 	powerUp[i].fallSpeed = ObjectFallSpeed;
 	powerUp[i].range = 15;
-	powerUp[i].img = life_img;
 	powerUp[i].type = 1; //change this later on if you want more special types of abilities
+	if (powerUp[i].type == 1)
+		powerUp[i].img = powerful_bullet_img;
 }
 
 ////Hit detection process for PLAYER shot
@@ -1164,6 +1165,23 @@ void DrawFallObject()
 		angle = 0;
 
 		img = lifeUp[i].img;
+
+		// Distplay of the falling obj
+		DrawRotaGraphF((float)x, (float)y, 1.0, angle, img, TRUE);
+	}
+
+	//check all falling items that exist
+	for (i = 0; i < MAX_POWER_UP_ITEMS; i++)
+	{
+		if (!powerUp[i].isExist)
+			continue;
+
+		x = powerUp[i].x;
+		y = powerUp[i].y;
+
+		angle = 0;
+
+		img = powerUp[i].img;
 
 		// Distplay of the falling obj
 		DrawRotaGraphF((float)x, (float)y, 1.0, angle, img, TRUE);
