@@ -580,7 +580,7 @@ void MakePowerUpItem(double x, double y) //type: 1 (powerful bullet), type: 2 ..
 }
 
 ////Hit detection process for PLAYER shot
-void JudgeItemCollision()
+void JudgePlayerShotIfHitEnemy()
 {
 	int i,j;
 	double x,y;
@@ -1387,7 +1387,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 			FallObjectsMovementHandler();
 
-			JudgeItemCollision();
+			JudgePlayerShotIfHitEnemy();
 			 
 			JudgeBullet();
 
