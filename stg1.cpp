@@ -110,6 +110,9 @@ int startLoopTime = 0; // Time when the loop start
 int endLoopTime = 0; // Time when the loop ends
 int timePassed = 0; // start - endtime
 
+bool isPowerfulBulletActive = false; // check if the powerful bullet ability is up
+int powerfulBulletActiveTimer = 0; // Keep track of how long the powerful bullet has been active for
+
 //Shooter
 struct Player
 {
@@ -213,7 +216,7 @@ struct powerUpItem
 	bool isExist;
 	int type; // this will determine what type of ability that the item will give to player
 };
-struct powerUpItem power[MAX_POWER_UP_ITEMS];
+struct powerUpItem powerUp[MAX_POWER_UP_ITEMS];
 
 void initEnemy(int i)
 {
@@ -501,8 +504,33 @@ void MakeLifeItem(double x, double y)
 	lifeUp[i].img = life_img;
 }
 
+// create a new Special Ability at (x,y) coordinate and drops it slowly from that coordinate
+void MakePowerUpItem(double x, double y) //type: 1 (powerful bullet), type: 2 ...
+{
+	int i = 0;
+	int ObjectFallSpeed = 1;
+
+	for (i = 0; i < MAX_POWER_UP_ITEMS; i++)
+	{
+		if (!powerUp[i].isExist)
+			break;
+	}
+
+	if (i == MAX_POWER_UP_ITEMS)
+		return;
+
+	powerUp[i].isExist = true;
+
+	powerUp[i].x = x;
+	powerUp[i].y = y;
+	powerUp[i].fallSpeed = ObjectFallSpeed;
+	powerUp[i].range = 15;
+	powerUp[i].img = life_img;
+	powerUp[i].type = 1; //change this later on if you want more special types of abilities
+}
+
 ////Hit detection process for PLAYER shot
-void JudgeShot()
+void JudgeItemCollision()
 {
 	int i,j;
 	double x,y;
@@ -535,6 +563,10 @@ void JudgeShot()
 				if(enemy[i].hp < 0)
 				{
 					MakeEffect( enemy[i].x, enemy[i].y, 17);//Explosion Effects
+
+					// 1 in twenty chances of special ability spawning after killing an enemy
+					if (GetRand(3) == 0)
+						MakePowerUpItem(enemy[i].x, enemy[i].y);
 
 					PlaySoundMem( bom_snd1 , DX_PLAYTYPE_BACK ) ;//sound of an explosion
 					if (enemy[i].isBoss)
@@ -1246,7 +1278,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 			FallObjectsMovementHandler();
 
-			JudgeShot();
+			JudgeItemCollision();
 			 
 			JudgeBullet();
 
