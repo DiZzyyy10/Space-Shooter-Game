@@ -50,6 +50,9 @@ http://takabosoft.com/edge
 //Maximum number of power that will exists on the screen at one time
 #define MAX_POWER_UP_ITEMS 5
 
+//Maximum time that the powerful bullet ability can stay active. set to 300 frames which should be 5s in this 60fps game
+#define MAX_ACTIVE_TIME_POWERFUL_BULLET 300
+
 //Bullet type
 #define NORMAL 1//Circle
 #define LASER 2//Laser
