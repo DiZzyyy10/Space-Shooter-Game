@@ -47,6 +47,9 @@ http://takabosoft.com/edge
 //Maximum number of the lives up abilily
 #define MAX_LIVES_INCREASE 1
 
+//Maximum number of power that will exists on the screen at one time
+#define MAX_POWER_UP_ITEMS 5
+
 //Bullet type
 #define NORMAL 1//Circle
 #define LASER 2//Laser
@@ -199,6 +202,18 @@ struct livesIncrease
 };
 struct livesIncrease lifeUp[MAX_LIVES_INCREASE];
 
+// items that would give player special abilities
+struct powerUpItem
+{
+	double x;
+	double y;
+	double fallSpeed;
+	double range;
+	int img;
+	bool isExist;
+	int type; // this will determine what type of ability that the item will give to player
+};
+struct powerUpItem power[MAX_POWER_UP_ITEMS];
 
 void initEnemy(int i)
 {
