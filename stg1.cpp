@@ -1110,7 +1110,24 @@ void FallObjectsMovementHandler()
 
 		lifeUp[i].x = x;
 		lifeUp[i].y = y;
+	}
 
+	for (i = 0; i < MAX_POWER_UP_ITEMS; i++)
+	{
+		if (!powerUp[i].isExist)
+			continue;
+
+		x = powerUp[i].x;
+		y = powerUp[i].y;
+
+		x = x;
+		y += powerUp[i].fallSpeed;
+
+		if (x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
+			powerUp[i].isExist = false;
+
+		powerUp[i].x = x;
+		powerUp[i].y = y;
 	}
 }
 
