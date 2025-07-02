@@ -110,6 +110,7 @@ int startLoopTime = 0; // Time when the loop start
 int endLoopTime = 0; // Time when the loop ends
 int timePassed = 0; // start - endtime
 
+bool isPlayerObtainPowerfulBullet = false; //keep track if the player has the powerfull bullet ability in hand
 bool isPowerfulBulletActive = false; // check if the powerful bullet ability is up
 int powerfulBulletActiveTimer = 0; // Keep track of how long the powerful bullet has been active for
 
@@ -1071,6 +1072,7 @@ void JudgeFallItemCollision()
 	double x, y;
 	int i;
 
+	//check for player interaction with lifeUp special item
 	for (i = 0; i < MAX_LIVES_INCREASE; i++)
 	{
 		if (!lifeUp[i].isExist)
@@ -1086,6 +1088,25 @@ void JudgeFallItemCollision()
 			player.hp++;
 			PlaySoundMem(life_increase, DX_PLAYTYPE_BACK); //play when player got lives_increase
 		}
+	}
+
+	//check for player interaction with Special Power Up item
+	for (i = 0; i < MAX_POWER_UP_ITEMS; i++)
+	{
+		if (!powerUp[i].isExist)
+			continue;
+
+		x = powerUp[i].x - player.x;
+		y = powerUp[i].y - player.y;
+
+		if (hypot(x, y) < player.range + powerUp[i].range && player.hp > 0)
+		{
+			powerUp[i].isExist = false;
+			isPlayerObtainPowerfulBullet = true;
+
+			PlaySoundMem(life_increase, DX_PLAYTYPE_BACK); //play when player got the ability
+		}
+
 	}
 }
 
