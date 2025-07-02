@@ -1313,16 +1313,15 @@ void DrawBack()
 void DrawSystem()
 {
 	DrawGraph( 0, 0, board_img,true);
+	DrawFormatString(540,102,WHITE,"%d",score);
 
 	if (player.hp > 2)
 	{
 		DrawFormatString(548,152,WHITE,"%d",player.hp);
-		DrawFormatString(540,102,WHITE,"%d",score);
 	}
 	else
 	{
 		DrawFormatString(548, 152, RED, "%d", player.hp);
-		DrawFormatString(540, 102, WHITE, "%d", score);
 	}
 	
 }
