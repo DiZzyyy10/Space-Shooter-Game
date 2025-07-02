@@ -416,7 +416,7 @@ void ActionPlayer()
 	if( CheckHitKey(KEY_INPUT_DOWN) )
 		player.y += speed;
 
-	//Shoot Shots.
+	// make player's charactor shoot when playing the 'z' Key
 	if( CheckHitKey(KEY_INPUT_Z)  && t % fire == 0 )
 	{
 		//+1 direction for each certain number of enemies defeated (up to 6 directions)
