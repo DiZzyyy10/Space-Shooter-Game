@@ -420,6 +420,7 @@ void ActionPlayer()
 
 	if( player.isDamage )//doesn't move while being hit by a bullet
 		return;
+
 	//Move with the directional keys
 	if( CheckHitKey(KEY_INPUT_LEFT) )
 		player.x -= speed;
@@ -429,15 +430,7 @@ void ActionPlayer()
 		player.y -= speed;
 	if( CheckHitKey(KEY_INPUT_DOWN) )
 		player.y += speed;
-
-	// make player's character shoot when playing the 'z' Key
-	if( CheckHitKey(KEY_INPUT_Z)  && t % fire == 0 )
-	{
-		//+1 direction for each certain number of enemies defeated (up to 6 directions)
-		way = score > LEVEL_UP_SCORE * 5 ? way : score / LEVEL_UP_SCORE + 1;
-		MakeWayShot(s_speed,power,range,way,OMEGA( (way - 1) * 20 ),s_angle);
-	}
-
+	
 	//Restrictions on movement
 	if( player.x < MIN_X )
 		player.x = MIN_X;
@@ -447,6 +440,22 @@ void ActionPlayer()
 		player.y = MIN_Y;
 	if( player.y > MAX_Y)
 		player.y = MAX_Y;
+	
+	
+	// if player press 'space' to use the Powerful Bullet Special Ability
+	if (CheckHitKey(KEY_INPUT_SPACE) && t % fire == 0 && isPowerfulBulletActive)
+	{
+		MakeShot(s_speed, s_angle, power * 4, range);
+		return;
+	}
+	
+	// make player's character shoot when playing the 'z' Key
+	if( CheckHitKey(KEY_INPUT_Z)  && t % fire == 0 )
+	{
+		//+1 direction for each certain number of enemies defeated (up to 6 directions)
+		way = score > LEVEL_UP_SCORE * 5 ? way : score / LEVEL_UP_SCORE + 1;
+		MakeWayShot(s_speed,power,range,way,OMEGA( (way - 1) * 20 ),s_angle);
+	}
 }
 
 //Movement of the shooter bullets
