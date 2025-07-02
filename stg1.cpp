@@ -445,7 +445,7 @@ void ActionPlayer()
 	// if player press 'space' to use the Powerful Bullet Special Ability
 	if (CheckHitKey(KEY_INPUT_SPACE) && t % fire == 0 && isPowerfulBulletActive)
 	{
-		MakeShot(s_speed, s_angle, power * 4, range);
+		MakeShot(s_speed, s_angle, power * 10, range);
 		return;
 	}
 	
