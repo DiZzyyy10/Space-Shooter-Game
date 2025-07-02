@@ -97,6 +97,7 @@ int board_img;//Image of the frame
 int back_img;//Background Image
 int life_img; // life increase aibility's picture
 int effect_img[17];//Effects Images
+int powerful_bullet_img; // powerful bullet sign
 int score;
 
 int shot_snd;//Sound of the shooter firing
@@ -309,6 +310,7 @@ void LoadData()
 	back_img = LoadGraph("back.png");
 	LoadDivGraph("effect.png",17,8,3,64,64,effect_img);
 	life_img = LoadGraph("life.png");
+	powerful_bullet_img = LoadGraph("powerful_bullet.png");
 
 	//sound
 	shot_snd = LoadSoundMem("push07.wav");
