@@ -1124,7 +1124,7 @@ void FallObjectsMovementHandler()
 		y += powerUp[i].fallSpeed;
 
 		if (x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
-			powerUp[i].isExist = false;
+			InitPowerUp(i);
 
 		powerUp[i].x = x;
 		powerUp[i].y = y;
@@ -1166,7 +1166,7 @@ void JudgeFallItemCollision()
 
 		if (hypot(x, y) < player.range + powerUp[i].range && player.hp > 0)
 		{
-			powerUp[i].isExist = false;
+			InitPowerUp(i);
 			isPlayerObtainPowerfulBullet = true;
 
 			PlaySoundMem(life_increase, DX_PLAYTYPE_BACK); //play when player got the ability
