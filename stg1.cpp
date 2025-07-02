@@ -68,7 +68,7 @@ http://takabosoft.com/edge
 #define WHITE GetColor(255,255,255)//White
 #define RED GetColor(255,0,0) // Red
 
-#define LEVEL_UP_SCORE 300 //Level up for each of this score.(100 points for 1 enemy)
+#define LEVEL_UP_SCORE 1500 //Level up for each of this score.(100 points for 1 enemy)
 
 #define BORN1 20 // Frequency of Enemy Appearance
 #define BASESCORETONEVERLETBOSSSPAWN 1000 //set anything above 10 should be okay, this is to not let the if statement in MakeEnemy() spawns boss right immidietly after the game start because of the modulo "%" condition is met
