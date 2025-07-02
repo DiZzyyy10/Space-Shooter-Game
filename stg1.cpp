@@ -250,6 +250,18 @@ void InitBullet(int i)
 	bullet[i].creationTime = 0;
 }
 
+//init power up items
+void InitPowerUp(int i)
+{
+	powerUp[i].x = 0;
+	powerUp[i].y = 0;
+	powerUp[i].fallSpeed = 0.0;
+	powerUp[i].range = 0.0;
+	powerUp[i].img = 0;
+	powerUp[i].isExist = false;
+	powerUp[i].type = 0;
+}
+
 //Initialization
 void Init()
 {
