@@ -73,6 +73,7 @@ http://takabosoft.com/edge
 //Color
 #define WHITE GetColor(255,255,255)//White
 #define RED GetColor(255,0,0) // Red
+#define GREEN GetColor(0,255,0) //green
 
 #define LEVEL_UP_SCORE 1500 //Level up for each of this score.(100 points for 1 enemy)
 
@@ -1312,18 +1313,24 @@ void DrawBack()
 //Display of scores, etc.
 void DrawSystem()
 {
-	DrawGraph( 0, 0, board_img,true);
-	DrawFormatString(540,102,WHITE,"%d",score);
+	int fontHandle = CreateFontToHandle("Arial", 12, 6); 
 
+	DrawGraph( 0, 0, board_img,true);
+	DrawFormatString(540,102,WHITE,"%d",score); // display score
+
+	//display the player's remaining lives
 	if (player.hp > 2)
-	{
 		DrawFormatString(548,152,WHITE,"%d",player.hp);
-	}
 	else
-	{
 		DrawFormatString(548, 152, RED, "%d", player.hp);
-	}
 	
+	// display powerful bullet's ability status
+	if (isPlayerObtainPowerfulBullet)
+		DrawFormatStringToHandle(450, 202, GREEN, fontHandle, "Powerful Bullet: READY");
+	else
+		DrawFormatStringToHandle(450, 202, RED, fontHandle, "Powerful Bullet: not ready");
+
+	DeleteFontToHandle(fontHandle);
 }
 
 int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
