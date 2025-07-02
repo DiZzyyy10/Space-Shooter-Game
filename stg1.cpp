@@ -322,7 +322,7 @@ void LoadData()
 	back_img = LoadGraph("back.png");
 	LoadDivGraph("effect.png",17,8,3,64,64,effect_img);
 	life_img = LoadGraph("life.png");
-	powerful_bullet_img = LoadGraph("powerful_bullet.png");
+	powerful_bullet_img = LoadGraph("powerful_bullet_item_sign.png");
 
 	//sound
 	shot_snd = LoadSoundMem("push07.wav");
