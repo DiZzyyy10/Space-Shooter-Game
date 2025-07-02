@@ -403,6 +403,17 @@ void MakeWayShot(double speed, int power, double range, int way, double wide_ang
 	}
 }
 
+//powerful bullet ability activater
+void CheckIfCanActivatePowerfulBulletAbility()
+{
+	if (isPlayerObtainPowerfulBullet && !isPowerfulBulletActive)
+	{
+		isPlayerObtainPowerfulBullet = false;
+		isPowerfulBulletActive = true;
+		powerfulBulletActiveTimer = t;
+	}
+}
+
 //Movement of the shooter
 void ActionPlayer()
 {
