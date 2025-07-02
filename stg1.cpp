@@ -47,6 +47,12 @@ http://takabosoft.com/edge
 //Maximum number of the lives up abilily
 #define MAX_LIVES_INCREASE 1
 
+//Maximum number of power that will exists on the screen at one time
+#define MAX_POWER_UP_ITEMS 5
+
+//Maximum time that the powerful bullet ability can stay active. set to 300 frames which should be 5s in this 60fps game
+#define MAX_ACTIVE_TIME_POWERFUL_BULLET 300
+
 //Bullet type
 #define NORMAL 1//Circle
 #define LASER 2//Laser
@@ -67,6 +73,7 @@ http://takabosoft.com/edge
 //Color
 #define WHITE GetColor(255,255,255)//White
 #define RED GetColor(255,0,0) // Red
+#define GREEN GetColor(0,255,0) //green
 
 #define LEVEL_UP_SCORE 1500 //Level up for each of this score.(100 points for 1 enemy)
 
@@ -91,6 +98,7 @@ int board_img;//Image of the frame
 int back_img;//Background Image
 int life_img; // life increase aibility's picture
 int effect_img[17];//Effects Images
+int powerful_bullet_img; // powerful bullet sign
 int score;
 
 int shot_snd;//Sound of the shooter firing
@@ -107,6 +115,10 @@ int startLoopTime = 0; // Time when the loop start
 int endLoopTime = 0; // Time when the loop ends
 int timePassed = 0; // start - endtime
 
+bool isPlayerObtainPowerfulBullet = false; //keep track if the player has the powerfull bullet ability in hand
+bool isPowerfulBulletActive = false; // check if the powerful bullet ability is up
+int powerfulBulletActiveTimer = 0; // Keep track of how long the powerful bullet has been active for
+
 //Shooter
 struct Player
 {
@@ -117,7 +129,6 @@ struct Player
 	double range;//collision detection radius
 	bool isDamage;//true if under fire
 };
-
 struct Player player;
 
 //Shooter Bullet
@@ -132,7 +143,6 @@ struct PlayerShot
 	int power;//power of the shot
 	bool isExist;//true if present, false if not present
 };
-
 struct PlayerShot shot[MAX_PLAYER_SHOT];
 
 //Enemy
@@ -153,7 +163,6 @@ struct Enemy
 	int t;//time
 
 };
-
 struct Enemy enemy[MAX_ENEMY];
 bool isBossExist = false;
 
@@ -176,7 +185,6 @@ struct Bullet
 	double originY;
 	int creationTime;
 };
-
 struct Bullet bullet[MAX_BULLET];//Bullets
 
 //Effect
@@ -189,7 +197,6 @@ struct Effect
 	int t;//Œo‰ßŽžŠÔ
 	bool isExist;//‘¶Ý‚µ‚½‚çtrueA‚¢‚È‚©‚Á‚½‚çfalse
 };
-
 struct Effect effect[MAX_EFFECT];
 
 // Increase Player's lives
@@ -202,8 +209,20 @@ struct livesIncrease
 	int img;
 	bool isExist;
 };
-
 struct livesIncrease lifeUp[MAX_LIVES_INCREASE];
+
+// items that would give player special abilities
+struct powerUpItem
+{
+	double x;
+	double y;
+	double fallSpeed;
+	double range;
+	int img;
+	bool isExist;
+	int type; // this will determine what type of ability that the item will give to player
+};
+struct powerUpItem powerUp[MAX_POWER_UP_ITEMS];
 
 void initEnemy(int i)
 {
@@ -230,6 +249,18 @@ void InitBullet(int i)
 	bullet[i].originX = 0;
 	bullet[i].originY = 0;
 	bullet[i].creationTime = 0;
+}
+
+//init power up items
+void InitPowerUp(int i)
+{
+	powerUp[i].x = 0;
+	powerUp[i].y = 0;
+	powerUp[i].fallSpeed = 0.0;
+	powerUp[i].range = 0.0;
+	powerUp[i].img = 0;
+	powerUp[i].isExist = false;
+	powerUp[i].type = 0;
 }
 
 //Initialization
@@ -292,6 +323,7 @@ void LoadData()
 	back_img = LoadGraph("back.png");
 	LoadDivGraph("effect.png",17,8,3,64,64,effect_img);
 	life_img = LoadGraph("life.png");
+	powerful_bullet_img = LoadGraph("powerful_bullet_item_sign.png");
 
 	//sound
 	shot_snd = LoadSoundMem("push07.wav");
@@ -389,6 +421,17 @@ void MakeWayShot(double speed, int power, double range, int way, double wide_ang
 	}
 }
 
+//powerful bullet ability activater
+void CheckIfCanActivatePowerfulBulletAbility()
+{
+	if (isPlayerObtainPowerfulBullet && !isPowerfulBulletActive)
+	{
+		isPlayerObtainPowerfulBullet = false;
+		isPowerfulBulletActive = true;
+		powerfulBulletActiveTimer = t;
+	}
+}
+
 //Movement of the shooter
 void ActionPlayer()
 {
@@ -406,6 +449,7 @@ void ActionPlayer()
 
 	if( player.isDamage )//doesn't move while being hit by a bullet
 		return;
+
 	//Move with the directional keys
 	if( CheckHitKey(KEY_INPUT_LEFT) )
 		player.x -= speed;
@@ -415,15 +459,7 @@ void ActionPlayer()
 		player.y -= speed;
 	if( CheckHitKey(KEY_INPUT_DOWN) )
 		player.y += speed;
-
-	// make player's character shoot when playing the 'z' Key
-	if( CheckHitKey(KEY_INPUT_Z)  && t % fire == 0 )
-	{
-		//+1 direction for each certain number of enemies defeated (up to 6 directions)
-		way = score > LEVEL_UP_SCORE * 5 ? way : score / LEVEL_UP_SCORE + 1;
-		MakeWayShot(s_speed,power,range,way,OMEGA( (way - 1) * 20 ),s_angle);
-	}
-
+	
 	//Restrictions on movement
 	if( player.x < MIN_X )
 		player.x = MIN_X;
@@ -433,6 +469,34 @@ void ActionPlayer()
 		player.y = MIN_Y;
 	if( player.y > MAX_Y)
 		player.y = MAX_Y;
+	
+	
+	// if player press 'space' to use the Powerful Bullet Special Ability
+	//but first check if the player has the ability but hasn't activated yet. If so we will activate it
+	if (CheckHitKey(KEY_INPUT_SPACE))
+		CheckIfCanActivatePowerfulBulletAbility();
+	
+	if (CheckHitKey(KEY_INPUT_SPACE) && t % fire == 0 && isPowerfulBulletActive)
+	{
+		MakeShot(s_speed, s_angle, power * 10, range);
+
+		//if the activation time runs out, we take back the ability from the player
+		int abilityLife = t - powerfulBulletActiveTimer;
+		if (abilityLife > MAX_ACTIVE_TIME_POWERFUL_BULLET)
+		{
+			isPowerfulBulletActive = false;
+			powerfulBulletActiveTimer = 0;
+		}
+		return;
+	}
+	
+	// make player's character shoot when playing the 'z' Key
+	if( CheckHitKey(KEY_INPUT_Z)  && t % fire == 0 )
+	{
+		//+1 direction for each certain number of enemies defeated (up to 6 directions)
+		way = score > LEVEL_UP_SCORE * 5 ? way : score / LEVEL_UP_SCORE + 1;
+		MakeWayShot(s_speed,power,range,way,OMEGA( (way - 1) * 20 ),s_angle);
+	}
 }
 
 //Movement of the shooter bullets
@@ -491,8 +555,34 @@ void MakeLifeItem(double x, double y)
 	lifeUp[i].img = life_img;
 }
 
+// create a new Special Ability at (x,y) coordinate and drops it slowly from that coordinate
+void MakePowerUpItem(double x, double y) //type: 1 (powerful bullet), type: 2 ...
+{
+	int i = 0;
+	int ObjectFallSpeed = 1;
+
+	for (i = 0; i < MAX_POWER_UP_ITEMS; i++)
+	{
+		if (!powerUp[i].isExist)
+			break;
+	}
+
+	if (i == MAX_POWER_UP_ITEMS)
+		return;
+
+	powerUp[i].isExist = true;
+
+	powerUp[i].x = x;
+	powerUp[i].y = y;
+	powerUp[i].fallSpeed = ObjectFallSpeed;
+	powerUp[i].range = 15;
+	powerUp[i].type = 1; //change this later on if you want more special types of abilities
+	if (powerUp[i].type == 1)
+		powerUp[i].img = powerful_bullet_img;
+}
+
 ////Hit detection process for PLAYER shot
-void JudgeShot()
+void JudgePlayerShotIfHitEnemy()
 {
 	int i,j;
 	double x,y;
@@ -525,6 +615,10 @@ void JudgeShot()
 				if(enemy[i].hp < 0)
 				{
 					MakeEffect( enemy[i].x, enemy[i].y, 17);//Explosion Effects
+
+					// 1 in twenty chances of special ability spawning after killing an enemy
+					if (GetRand(3) == 0)
+						MakePowerUpItem(enemy[i].x, enemy[i].y);
 
 					PlaySoundMem( bom_snd1 , DX_PLAYTYPE_BACK ) ;//sound of an explosion
 					if (enemy[i].isBoss)
@@ -1019,16 +1113,34 @@ void FallObjectsMovementHandler()
 
 		lifeUp[i].x = x;
 		lifeUp[i].y = y;
+	}
 
+	for (i = 0; i < MAX_POWER_UP_ITEMS; i++)
+	{
+		if (!powerUp[i].isExist)
+			continue;
+
+		x = powerUp[i].x;
+		y = powerUp[i].y;
+
+		x = x;
+		y += powerUp[i].fallSpeed;
+
+		if (x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
+			InitPowerUp(i);
+
+		powerUp[i].x = x;
+		powerUp[i].y = y;
 	}
 }
 
 //judge if the player took the falling object (ability)
-void judgeFallObject()
+void JudgeFallItemCollision()
 {
 	double x, y;
 	int i;
 
+	//check for player interaction with lifeUp special item
 	for (i = 0; i < MAX_LIVES_INCREASE; i++)
 	{
 		if (!lifeUp[i].isExist)
@@ -1044,6 +1156,25 @@ void judgeFallObject()
 			player.hp++;
 			PlaySoundMem(life_increase, DX_PLAYTYPE_BACK); //play when player got lives_increase
 		}
+	}
+
+	//check for player interaction with Special Power Up item
+	for (i = 0; i < MAX_POWER_UP_ITEMS; i++)
+	{
+		if (!powerUp[i].isExist)
+			continue;
+
+		x = powerUp[i].x - player.x;
+		y = powerUp[i].y - player.y;
+
+		if (hypot(x, y) < player.range + powerUp[i].range && player.hp > 0)
+		{
+			InitPowerUp(i);
+			isPlayerObtainPowerfulBullet = true;
+
+			PlaySoundMem(life_increase, DX_PLAYTYPE_BACK); //play when player got the ability
+		}
+
 	}
 }
 
@@ -1066,6 +1197,23 @@ void DrawFallObject()
 		angle = 0;
 
 		img = lifeUp[i].img;
+
+		// Distplay of the falling obj
+		DrawRotaGraphF((float)x, (float)y, 1.0, angle, img, TRUE);
+	}
+
+	//check all falling items that exist
+	for (i = 0; i < MAX_POWER_UP_ITEMS; i++)
+	{
+		if (!powerUp[i].isExist)
+			continue;
+
+		x = powerUp[i].x;
+		y = powerUp[i].y;
+
+		angle = 0;
+
+		img = powerUp[i].img;
 
 		// Distplay of the falling obj
 		DrawRotaGraphF((float)x, (float)y, 1.0, angle, img, TRUE);
@@ -1167,19 +1315,24 @@ void DrawBack()
 //Display of scores, etc.
 void DrawSystem()
 {
-	DrawGraph( 0, 0, board_img,true);
+	int fontHandle = CreateFontToHandle("Arial", 12, 6); 
 
+	DrawGraph( 0, 0, board_img,true);
+	DrawFormatString(540,102,WHITE,"%d",score); // display score
+
+	//display the player's remaining lives
 	if (player.hp > 2)
-	{
 		DrawFormatString(548,152,WHITE,"%d",player.hp);
-		DrawFormatString(540,102,WHITE,"%d",score);
-	}
 	else
-	{
 		DrawFormatString(548, 152, RED, "%d", player.hp);
-		DrawFormatString(540, 102, WHITE, "%d", score);
-	}
 	
+	// display powerful bullet's ability status
+	if (isPlayerObtainPowerfulBullet)
+		DrawFormatStringToHandle(450, 202, GREEN, fontHandle, "Powerful Bullet: READY");
+	else
+		DrawFormatStringToHandle(450, 202, RED, fontHandle, "Powerful Bullet: not ready");
+
+	DeleteFontToHandle(fontHandle);
 }
 
 int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -1236,11 +1389,11 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 			FallObjectsMovementHandler();
 
-			JudgeShot();
+			JudgePlayerShotIfHitEnemy();
 			 
 			JudgeBullet();
 
-			judgeFallObject();
+			JudgeFallItemCollision();
 
 			DrawBack();
 
