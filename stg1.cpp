@@ -457,9 +457,19 @@ void ActionPlayer()
 	
 	
 	// if player press 'space' to use the Powerful Bullet Special Ability
+	//but first check if the player has the ability but hasn't activated yet. If so we will activate it
+	CheckIfCanActivatePowerfulBulletAbility();
 	if (CheckHitKey(KEY_INPUT_SPACE) && t % fire == 0 && isPowerfulBulletActive)
 	{
 		MakeShot(s_speed, s_angle, power * 10, range);
+
+		//if the activation time runs out, we take back the ability from the player
+		int abilityLife = t - powerfulBulletActiveTimer;
+		if (abilityLife > MAX_ACTIVE_TIME_POWERFUL_BULLET)
+		{
+			isPowerfulBulletActive = false;
+			powerfulBulletActiveTimer = 0;
+		}
 		return;
 	}
 	
