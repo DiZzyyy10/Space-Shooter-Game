@@ -404,7 +404,7 @@ void ActionPlayer()
 	int way = 5;
 
 
-	if( player.isDamage )//Do not move while being hit by a bullet
+	if( player.isDamage )//doesn't move while being hit by a bullet
 		return;
 	//Move with the directional keys
 	if( CheckHitKey(KEY_INPUT_LEFT) )
@@ -416,7 +416,7 @@ void ActionPlayer()
 	if( CheckHitKey(KEY_INPUT_DOWN) )
 		player.y += speed;
 
-	// make player's charactor shoot when playing the 'z' Key
+	// make player's character shoot when playing the 'z' Key
 	if( CheckHitKey(KEY_INPUT_Z)  && t % fire == 0 )
 	{
 		//+1 direction for each certain number of enemies defeated (up to 6 directions)
