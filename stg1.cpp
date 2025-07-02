@@ -117,7 +117,6 @@ struct Player
 	double range;//collision detection radius
 	bool isDamage;//true if under fire
 };
-
 struct Player player;
 
 //Shooter Bullet
@@ -132,7 +131,6 @@ struct PlayerShot
 	int power;//power of the shot
 	bool isExist;//true if present, false if not present
 };
-
 struct PlayerShot shot[MAX_PLAYER_SHOT];
 
 //Enemy
@@ -153,7 +151,6 @@ struct Enemy
 	int t;//time
 
 };
-
 struct Enemy enemy[MAX_ENEMY];
 bool isBossExist = false;
 
@@ -176,7 +173,6 @@ struct Bullet
 	double originY;
 	int creationTime;
 };
-
 struct Bullet bullet[MAX_BULLET];//Bullets
 
 //Effect
@@ -189,7 +185,6 @@ struct Effect
 	int t;//åoâﬂéûä‘
 	bool isExist;//ë∂ç›ÇµÇΩÇÁtrueÅAÇ¢Ç»Ç©Ç¡ÇΩÇÁfalse
 };
-
 struct Effect effect[MAX_EFFECT];
 
 // Increase Player's lives
@@ -202,8 +197,8 @@ struct livesIncrease
 	int img;
 	bool isExist;
 };
-
 struct livesIncrease lifeUp[MAX_LIVES_INCREASE];
+
 
 void initEnemy(int i)
 {
