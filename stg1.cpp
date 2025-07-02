@@ -1066,7 +1066,7 @@ void FallObjectsMovementHandler()
 }
 
 //judge if the player took the falling object (ability)
-void judgeFallObject()
+void JudgeFallItemCollision()
 {
 	double x, y;
 	int i;
@@ -1282,7 +1282,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			 
 			JudgeBullet();
 
-			judgeFallObject();
+			JudgeFallItemCollision();
 
 			DrawBack();
 
